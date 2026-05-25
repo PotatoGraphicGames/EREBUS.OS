@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EREBUS.OS // Official Database</title>
+    <style>
+        /* Global Terminal Theme styling */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        body { background-color: #030703; color: #00ff66; overflow-x: hidden; line-height: 1.6; }
+        
+        /* Custom Scanline Visual Overlay effect */
+        body::before {
+            content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 9999; background-size: 100% 4px, 6px 100%; pointer-events: none;
+        }
+
+        /* Top Header Navigation layout */
+        header { background-color: #001100; border-bottom: 2px solid #00ff66; padding: 20px 8%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 0 15px rgba(0, 255, 102, 0.2); }
+        .logo { font-size: 24px; font-weight: bold; letter-spacing: 3px; text-shadow: 0 0 8px #00ff66; color: #00ff66; text-decoration: none; }
+        nav a { color: #00aa44; text-decoration: none; margin-left: 25px; font-weight: bold; transition: all 0.3s ease; font-size: 14px; text-transform: uppercase; }
+        nav a:hover { color: #00ff66; text-shadow: 0 0 5px #00ff66; }
+
+        /* Hero Main Landing Container space */
+        .hero { height: 75vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 20px; background: radial-gradient(circle, rgba(0,26,8,0.4) 0%, rgba(3,7,3,1) 80%); border-bottom: 1px dashed #004411; }
+        .hero h1 { font-size: 4rem; margin-bottom: 15px; letter-spacing: 8px; text-shadow: 0 0 15px rgba(0,255,102,0.7); animation: staticGlow 2s infinite alternate; }
+        .hero p { font-size: 1.1rem; color: #88ffaa; max-width: 700px; margin-bottom: 35px; letter-spacing: 1px; }
+        
+        /* Action buttons with neon interaction borders */
+        .btn-matrix { border: 2px solid #00ff66; background: rgba(0, 40, 10, 0.2); color: #00ff66; padding: 15px 40px; text-decoration: none; font-weight: bold; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; transition: all 0.2s ease; box-shadow: 0 0 10px rgba(0, 255, 102, 0.3); }
+        .btn-matrix:hover { background: #00ff66; color: #000; box-shadow: 0 0 25px rgba(0, 255, 102, 0.8); transform: translateY(-2px); }
+
+        /* General site wrapper constraints */
+        .main-wrapper { max-width: 1200px; margin: auto; padding: 60px 20px; }
+        section { margin-bottom: 90px; }
+        .section-header { font-size: 1.8rem; margin-bottom: 40px; border-bottom: 1px solid #004411; padding-bottom: 10px; letter-spacing: 3px; color: #ffffff; text-shadow: 0 0 5px #00ff66; }
+
+        /* System Manifest Profile styling cards */
+        .grid-mechanics { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
+        .card-terminal { background: rgba(0, 12, 3, 0.8); border: 1px solid #005522; border-radius: 4px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+        .terminal-header { background: #001f08; padding: 8px 15px; border-bottom: 1px solid #005522; display: flex; align-items: center; gap: 6px; }
+        .terminal-dot { width: 8px; height: 8px; border-radius: 50%; background-color: #00ff66; display: inline-block; }
+        .terminal-title { font-size: 11px; color: #00aa44; font-weight: bold; }
+        .terminal-content { padding: 25px; }
+        .terminal-content h3 { margin-bottom: 12px; font-size: 18px; color: #ffffff; text-transform: uppercase; }
+        .terminal-content p { color: #88ffaa; font-size: 13px; }
+
+        /* Operative Class Grid customization layout specs */
+        .class-showcase { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+        .class-profile { border: 1px dashed #00ff66; padding: 20px; background: rgba(0,20,5,0.2); }
+        .class-name { font-size: 20px; font-weight: bold; color: #ffffff; margin-bottom: 5px; text-transform: uppercase; }
+        .class-bonus { font-size: 12px; color: #ffaa00; font-weight: bold; margin-bottom: 10px; }
+
+        /* Media display structures */
+        .media-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+        .screenshot-frame { background: #000; border: 2px solid #003311; position: relative; padding-top: 56.25%; overflow: hidden; transition: all 0.3s ease; }
+        .screenshot-frame:hover { border-color: #00ff66; box-shadow: 0 0 15px rgba(0,255,102,0.4); }
+        .screenshot-frame .placeholder-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; color: #004411; font-weight: bold; font-size: 14px; background: linear-gradient(45deg, #010a02 25%, #021405 25%, #021405 50%, #010a02 50%, #010a02 75%, #021405 75%); background-size: 40px 40px; }
+
+        /* Footer architecture */
+        footer { background-color: #001100; text-align: center; padding: 40px 20px; border-top: 2px solid #00ff66; font-size: 12px; color: #00aa44; box-shadow: 0 -5px 15px rgba(0, 255, 102, 0.1); }
+        
+        /* Ambient layout animations */
+        @keyframes staticGlow { from { text-shadow: 0 0 10px rgba(0,255,102,0.5); } to { text-shadow: 0 0 25px rgba(0,255,102,0.9), 0 0 10px rgba(0,255,102,0.4); } }
+        @media (max-width: 768px) { .hero h1 { font-size: 2.5rem; } header { flex-direction: column; gap: 15px; } nav a { margin: 0 10px; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">EREBUS.OS</a>
+        <nav>
+            <a href="#manifest">System Manifest</a>
+            <a href="#operatives">Operatives</a>
+            <a href="#archives">Data Archives</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>EREBUS.OS</h1>
+        <p>A multiplayer survival matrix. Enter the labyrinth, interface with compromised system nodes, decrypt scattered data volumes, and preserve your biometrics before the anomalies clean your hard trace.</p>
+        <a href="game3.html" class="btn-matrix">Boot Local Hardware Engine</a>
+    </section>
+
+    <div class="main-wrapper">
+
+        <section id="manifest">
+            <h2 class="section-header">// CORE_MECHANICS_MANIFEST</h2>
+            <div class="grid-mechanics">
+                
+                <div class="card-terminal">
+                    <div class="terminal-header"><span class="terminal-dot"></span><span class="terminal-title">MODULE::BLINK_MANAGEMENT</span></div>
+                    <div class="terminal-content">
+                        <h3>Automated Blink Meter</h3>
+                        <p>Your physical eye shutter rate is tracking down constantly. When the countdown clears completely, involuntary blinking activates—giving local horrors an instantaneous window to distort position calculations and warp directly closer to you.</p>
+                    </div>
+                </div>
+
+                <div class="card-terminal">
+                    <div class="terminal-header"><span class="terminal-dot"></span><span class="terminal-title">MODULE::ELECTROMAGNETIC_FLICKER</span></div>
+                    <div class="terminal-content">
+                        <h3>Flashlight Distortions</h3>
+                        <p>Your high-intensity illumination line isn't safe. Bounding box interference from approaching anomalies will induce immediate electromagnetic flickering, creating unpredictable blackouts right when threats draw near.</p>
+                    </div>
+                </div>
+
+                <div class="card-terminal">
+                    <div class="terminal-header"><span class="terminal-dot"></span><span class="terminal-title">MODULE::SANITY_DEGRADATION</span></div>
+                    <div class="terminal-content">
+                        <h3>Hallucination Clones</h3>
+                        <p>Navigating through deep dark environments or enduring proximity stress inside the grid breaks down mental metrics. Low sanity shifts your camera optics field-of-view and materializes deceptive red shadow phantom hallucinations.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="operatives">
+            <h2 class="section-header">// RECRUIT_LIVE_OPERATIVE_CLASSES</h2>
+            <p style="margin-bottom: 25px; color:#88ffaa;">Choose your specialization profile prior to network connection inside the server chamber:</p>
+            
+            <div class="class-showcase">
+                <div class="class-profile">
+                    <div class="class-name">Hazmat Tech</div>
+                    <div class="class-bonus">Sprinting Mod: Speed +15% // Burn Rate: -50%</div>
+                    <p style="font-size: 13px; color: #88ffaa;">Built for quick exploration and evasion maneuvers. Maximizes survival run configurations through tight corridors.</p>
+                </div>
+                <div class="class-profile">
+                    <div class="class-name">Security Specialist</div>
+                    <div class="class-bonus">Illumination Mod: Beam Double Strength + Wide Field</div>
+                    <p style="font-size: 13px; color: #88ffaa;">Cuts through volumetric fog effortlessly. Delivers clear visibility ranges to alert teammates about looming threats.</p>
+                </div>
+                <div class="class-profile">
+                    <div class="class-name">System Engineer</div>
+                    <div class="class-bonus">Decryption Engine Acceleration: +50% Efficiency</div>
+                    <p style="font-size: 13px; color: #88ffaa;">The ultimate mission asset. Overclocks data extraction nodes at blazing speeds to shorten maze operational cycles.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="archives">
+            <h2 class="section-header">// VISUAL_LOGS_ARCHIVE</h2>
+            <div class="media-grid">
+                <div class="screenshot-frame">
+                    <div class="placeholder-art">[ARCHIVE_IMAGE_01 // CORRIDOR_VIEW]</div>
+                </div>
+                <div class="screenshot-frame">
+                    <div class="placeholder-art">[ARCHIVE_IMAGE_02 // TERMINAL_DECRYPT]</div>
+                </div>
+                <div class="screenshot-frame">
+                    <div class="placeholder-art">[ARCHIVE_IMAGE_03 // ANOMALY_DETECTION]</div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>EREBUS.OS // COLD KERNEL SYSTEM ARCHITECTURE VERSION 1.0.4</p>
+        <p style="margin-top: 10px; font-size: 10px; opacity: 0.6;">&copy; 2026 EREBUS LABS INC. TRANSMISSION DECRYPT OPERATIONS ALL RIGHTS RESERVED.</p>
+    </footer>
+
+</body>
+</html>
