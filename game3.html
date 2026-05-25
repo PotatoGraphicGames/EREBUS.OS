@@ -3,697 +3,1281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EREBUS.OS // COLD STORAGE ARCHITECTURE</title>
+    <title>EREBUS.OS // EXPANDED SURVIVAL MATRIX ENGINE</title>
     <style>
-        * { box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background-color: #000; font-family: 'Courier New', Courier, monospace; user-select: none; }
+        /* =========================================================================
+           CORE SYSTEM TERMINAL VISUAL ARCHITECTURE
+           ========================================================================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #010502; font-family: 'Courier New', Courier, monospace; user-select: none; color: #00ff66; }
         
-        #game-viewport { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; z-index: 5; }
-        .hud-text { color: #00ff00; text-shadow: 0 0 8px rgba(0, 255, 0, 0.8); font-size: 13px; font-weight: bold; letter-spacing: 2px; }
+        #game-canvas-viewport { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
-        #interaction-prompt { position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); color: #ffffff; background: rgba(0,20,0,0.9); border: 1px solid #00ff00; padding: 12px 24px; font-size: 14px; font-weight: bold; display: none; z-index: 6; letter-spacing: 1px; text-align: center; }
-        #decrypt-progress-container { width: 100%; height: 6px; background: #003300; margin-top: 8px; border: 1px solid #00ff00; display: none; }
-        #decrypt-progress-bar { width: 0%; height: 100%; background: #00ff00; }
+        /* CRT Video Overlay Glitch Simulation Scanlines */
+        #crt-scanlines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); background-size: 100% 4px, 6px 100%; z-index: 8; pointer-events: none; }
         
-        #motion-tracker { color: #00ff00; font-size: 12px; margin-top: 5px; font-weight: bold; text-shadow: 0 0 5px #00ff00; }
-        .tracker-crit { color: #ff0000 !important; animation: blink 0.2s infinite alternate; }
+        /* Dynamic Screen Glitch Overlay Matrix */
+        #glitch-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 255, 102, 0); z-index: 7; pointer-events: none; transition: background 0.05s ease; }
+        .glitch-active { animation: screenShake 0.15s infinite alternate, matrixFlash 0.3s infinite; }
 
-        #bars-container { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-        .bar-wrapper { display: flex; align-items: center; gap: 10px; }
-        .bar-label { color: #00ff00; font-size: 11px; width: 85px; font-weight: bold; }
-        .hud-bar-bg { width: 200px; height: 10px; background: rgba(0, 20, 0, 0.6); border: 1px solid #00ff00; overflow: hidden; }
-        #stamina-bar { width: 100%; height: 100%; background: #00ff00; }
-        #sanity-bar { width: 100%; height: 100%; background: #ffaa00; box-shadow: 0 0 8px #ffaa00; }
-        #blink-bar { width: 100%; height: 100%; background: #00aaff; }
-
-        #net-feed { position: absolute; bottom: 100px; left: 25px; width: 350px; height: 140px; background: rgba(0,8,0,0.6); border: 1px solid #004400; padding: 8px; overflow: hidden; display: flex; flex-direction: column-reverse; gap: 4px; z-index: 5; pointer-events: none; }
-        .net-msg { font-size: 11px; color: #00ffaa; }
-
-        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; color: #00ff00; text-align: center; border: 6px solid #00ff00; padding: 20px; }
-        .class-selector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; pointer-events: auto; width: 95%; max-width: 900px; }
-        .class-card { background: rgba(0, 10, 0, 0.8); border: 2px solid #004400; padding: 12px; cursor: pointer; text-align: left; }
-        .class-card.selected { border-color: #00ff00; background: rgba(0, 35, 0, 0.9); box-shadow: 0 0 15px rgba(0,255,0,0.4); }
-        .class-title { font-size: 0.95rem; font-weight: bold; color: #00ff00; text-transform: uppercase; }
-        .class-perk { font-size: 0.75rem; color: #ffffff; margin-top: 4px; }
-
-        .network-panel { background: rgba(0, 15, 0, 0.9); border: 2px dashed #00aa00; padding: 15px; margin-bottom: 15px; width: 100%; max-width: 580px; pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .net-input { background: #000; border: 1px solid #00ff00; color: #00ff00; font-family: inherit; font-size: 1rem; padding: 6px; text-align: center; width: 150px; outline: none; }
-
-        .action-btn { background: #001000; border: 2px solid #00ff00; color: #00ff00; padding: 12px 30px; font-family: inherit; font-size: 1rem; cursor: pointer; font-weight: bold; letter-spacing: 1px; }
-        .action-btn:hover { background: #00ff00; color: #000; }
-        .action-btn:disabled { border-color: #004400; color: #004400; cursor: not-allowed; }
+        /* HUD Overlay Management */
+        #hud-master-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; z-index: 5; }
+        .hud-text-glow { color: #00ff66; text-shadow: 0 0 8px rgba(0, 255, 102, 0.8); font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
         
-        #blink-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:#000; opacity:0; z-index:13; pointer-events:none; transition: opacity 0.08s ease; }
-        #jumpscare-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; opacity: 0; z-index: 14; pointer-events: none; display: flex; justify-content: center; align-items: center; }
-        #jumpscare-face { color: #ff0000; font-size: 12vw; font-weight: bold; font-family: sans-serif; display: none; text-shadow: 0 0 30px #ff0000; }
-        .jumpscare-active { opacity: 1 !important; animation: horror-strobe 0.04s infinite; }
-        #gameover-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0c0000; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 15; color: #ff0000; border: 6px solid #ff0000; pointer-events: auto; }
+        /* Modular Inventory Slots System Layout */
+        #inventory-hotbar { display: flex; gap: 10px; pointer-events: auto; margin-top: 15px; }
+        .inv-slot { width: 55px; height: 55px; background: rgba(0, 15, 5, 0.75); border: 1px solid #005522; border-radius: 3px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; transition: all 0.2s; }
+        .inv-slot.active-slot { border-color: #00ff66; box-shadow: 0 0 10px rgba(0, 255, 102, 0.4); background: rgba(0, 35, 12, 0.9); }
+        .inv-keybind { position: absolute; top: 2px; left: 4px; font-size: 9px; color: #00aa44; }
+        .inv-icon { font-size: 18px; margin-bottom: 2px; }
+        .inv-count { position: absolute; bottom: 2px; right: 4px; font-size: 10px; color: #ffffff; }
 
-        @keyframes horror-strobe { 0% { background-color: #330000; } 50% { background-color: #000; } 100% { background-color: #770000; } }
-        @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
+        /* Multi-bar Vital Metrics Status Layout */
+        #vitals-panel { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; background: rgba(0,10,3,0.5); padding: 12px; border: 1px solid #003311; width: 290px; }
+        .bar-container { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .bar-label { font-size: 10px; color: #00ff66; font-weight: bold; width: 80px; letter-spacing: 1px; }
+        .bar-frame { width: 170px; height: 10px; background: rgba(0, 20, 5, 0.6); border: 1px solid #00aa44; overflow: hidden; position: relative; }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.1s linear; }
+        #fill-stamina { background: #00ff66; }
+        #fill-sanity { background: #ffaa00; box-shadow: 0 0 6px #ffaa00; }
+        #fill-blink { background: #00ccff; }
+        #fill-battery { background: #ffffff; box-shadow: 0 0 6px #ffffff; }
+
+        /* Comms Network Diagnostic Live Logs Log Stream */
+        #network-diagnostic-log { width: 380px; height: 150px; background: rgba(0,5,2,0.7); border: 1px solid #004411; padding: 10px; overflow: hidden; display: flex; flex-direction: column-reverse; gap: 4px; pointer-events: none; font-size: 11px; }
+        .log-line { animation: fadeLineIn 0.2s ease-out forwards; }
+        .log-sys { color: #00ffaa; }
+        .log-warn { color: #ffaa00; font-weight: bold; }
+        .log-crit { color: #ff3333; font-weight: bold; animation: textPulseStrobe 0.4s infinite alternate; }
+
+        /* Context Hacking Interminable Screens Subroutines */
+        #hacking-terminal-modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; background: rgba(0,12,3,0.96); border: 2px solid #00ff66; padding: 25px; display: none; z-index: 10; pointer-events: auto; box-shadow: 0 0 35px rgba(0,255,102,0.4); text-align: center; }
+        .hack-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+        .hack-node { background: #001f08; border: 1px solid #007733; height: 50px; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; font-weight: bold; color: #00ff66; }
+        .hack-node.matched { background: #00ff66; color: #000; border-color: #ffffff; }
+        .hack-node.failed { background: #440000; color: #ff3333; border-color: #ff3333; }
+
+        /* Configuration Diagnostic Submenu Control Panels */
+        #config-settings-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; background: rgba(2,8,2,0.98); border: 3px double #00ff66; padding: 30px; display: none; z-index: 11; pointer-events: auto; }
+        .config-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .config-slider { width: 200px; accent-color: #00ff66; background: #003311; border: 1px solid #00ff66; outline: none; }
+
+        /* Interaction and Objective Prompts Setup */
+        #interaction-alert-system { position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,10,2,0.9); border: 1px dashed #00ff66; padding: 15px 30px; font-size: 13px; font-weight: bold; text-align: center; display: none; z-index: 6; box-shadow: 0 0 15px rgba(0,255,102,0.2); }
+        
+        /* Boot Splash Engine Initialization Overlays */
+        .overlay-fullscreen-curtain { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; padding: 30px; border: 8px solid #00ff66; text-align: center; }
+        .class-selection-matrix { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; max-width: 850px; margin: 25px 0; pointer-events: auto; }
+        .class-selection-card { background: rgba(0,15,4,0.6); border: 1px solid #004411; padding: 15px; cursor: pointer; text-align: left; transition: all 0.2s; }
+        .class-selection-card:hover { border-color: #00aa44; background: rgba(0,30,10,0.8); }
+        .class-selection-card.active-selection { border-color: #00ff66; background: rgba(0,45,15,0.9); box-shadow: 0 0 15px rgba(0,255,102,0.3); }
+        .class-card-header { font-size: 15px; font-weight: bold; color: #ffffff; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px dashed #00ff66; padding-bottom: 4px; }
+        .class-card-desc { font-size: 11px; color: #88ffaa; line-height: 1.4; }
+
+        .terminal-input-field { background: #000000; border: 1px solid #00aa44; color: #00ff66; font-family: inherit; font-size: 14px; padding: 8px; text-align: center; width: 180px; margin-top: 5px; outline: none; }
+        .terminal-input-field:focus { border-color: #00ff66; box-shadow: 0 0 8px rgba(0,255,102,0.3); }
+
+        .btn-terminal-action { background: #001a05; border: 1px solid #00ff66; color: #00ff66; padding: 12px 32px; font-family: inherit; font-size: 13px; font-weight: bold; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; transition: all 0.2s; }
+        .btn-terminal-action:hover { background: #00ff66; color: #000000; box-shadow: 0 0 15px rgba(0,255,102,0.6); }
+        .btn-terminal-action:disabled { border-color: #003311; color: #004411; cursor: not-allowed; background: #000501; }
+
+        /* Absolute Game-Over and Metric Display States */
+        #gameover-diagnostic-panel { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #080000; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 25; color: #ff3333; border: 8px solid #ff3333; pointer-events: auto; }
+        .metrics-grid-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; max-width: 500px; margin: 25px 0; background: rgba(20,0,0,0.4); padding: 20px; border: 1px dashed #ff3333; font-size: 12px; color: #ffffff; }
+
+        /* Animation Keyframe Parameters Mechanics */
+        @keyframes screenShake { 0% { transform: translate(1px, 1px) rotate(0deg); } 100% { transform: translate(-1px, -1px) rotate(0.5deg); } }
+        @keyframes matrixFlash { 0% { background: rgba(0, 255, 102, 0.0); } 50% { background: rgba(0, 255, 102, 0.04); } 100% { background: rgba(0, 255, 102, 0.0); } }
+        @keyframes textPulseStrobe { from { opacity: 1.0; } to { opacity: 0.4; } }
+        @keyframes fadeLineIn { from { transform: translateY(5px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Eye Blinking Closure Simulation Animation Layers */
+        #eye-blink-shutter-top { position: absolute; top: -50%; left: 0; width: 100%; height: 50%; background: #000000; z-index: 15; transition: top 0.12s cubic-bezier(0.4, 0, 1, 1); pointer-events: none; }
+        #eye-blink-shutter-bottom { position: absolute; bottom: -50%; left: 0; width: 100%; height: 50%; background: #000000; z-index: 15; transition: bottom 0.12s cubic-bezier(0.4, 0, 1, 1); pointer-events: none; }
+        .blink-closed-top { top: 0 !important; }
+        .blink-closed-bottom { bottom: 0 !important; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body>
 
-    <canvas id="game-viewport"></canvas>
-    <div id="blink-overlay"></div>
-    <div id="jumpscare-overlay"><div id="jumpscare-face">MORTAL ERR</div></div>
-    
-    <div id="interaction-prompt">
-        <span id="prompt-text">HOLD [E] TO DECRYPT TERMINAL CORE</span>
-        <div id="decrypt-progress-container"><div id="decrypt-progress-bar"></div></div>
-    </div>
-    
-    <div id="net-feed"></div>
+    <canvas id="game-canvas-viewport"></canvas>
+    <div id="crt-scanlines"></div>
+    <div id="glitch-overlay"></div>
+    <div id="eye-blink-shutter-top"></div>
+    <div id="eye-blink-shutter-bottom"></div>
 
-    <div id="ui-layer">
-        <div>
-            <div id="objective" class="hud-text">OBJECTIVE: DECRYPT CORES [0/3]</div>
-            <div id="motion-tracker">SYSTEM MATRIX: ACCESS INITIALIZATION</div>
-            <div id="bars-container">
-                <div class="bar-wrapper">
-                    <span class="bar-label">STAMINA</span>
-                    <div class="hud-bar-bg"><div id="stamina-bar"></div></div>
-                </div>
-                <div class="bar-wrapper">
-                    <span class="bar-label">SANITY</span>
-                    <div class="hud-bar-bg"><div id="sanity-bar"></div></div>
-                </div>
-                <div class="bar-wrapper">
-                    <span class="bar-label">EYE BLINK</span>
-                    <div class="hud-bar-bg"><div id="blink-bar"></div></div>
-                </div>
-            </div>
-        </div>
-        <div id="status" class="hud-text">EREBUS_OS V1.0.4 SECURE_LINK</div>
+    <div id="interaction-alert-system">INTERFACING PATH DISCOVERED: INTERACT [KEY E]</div>
+
+    <div id="hacking-terminal-modal">
+        <div class="hud-text-glow" style="font-size: 16px; margin-bottom: 5px;">// CIPHER_BREAK_INITIALIZED</div>
+        <p style="font-size: 11px; color: #88ffaa;">MATCH REPLICATED SECURITY KEY REGISTER NODES</p>
+        <div class="hack-grid" id="hack-matrix-node-container"></div>
+        <div style="font-size: 11px; color: #ffaa00;" id="hack-status-message">OVERRIDING FIREWALL DECRYPTION STREAM...</div>
     </div>
 
-    <div id="start-screen" class="overlay-screen">
-        <h1>EREBUS.OS // SYSTEM COLD BOOT</h1>
-        <p style="color: #00aa00; letter-spacing: 2px;">SURVIVE THE MAZE. DECRYPT DATA TERMINALS. ESCAPE ALIVE.</p>
-
-        <div class="class-selector-grid">
-            <div class="class-card selected" id="char-hazmat" onclick="selectClass('hazmat')">
-                <div class="class-title">Hazmat Tech</div>
-                <p class="class-perk">Sprint speed increased +15%. Stamina depletion halved.</p>
-            </div>
-            <div class="class-card" id="char-guard" onclick="selectClass('guard')">
-                <div class="class-title">Security Specialist</div>
-                <p class="class-perk">Flashlight intensity doubled. Beam spread expanded.</p>
-            </div>
-            <div class="class-card" id="char-engineer" onclick="selectClass('engineer')">
-                <div class="class-title">System Engineer</div>
-                <p class="class-perk">Terminal decryption speeds enhanced significantly (+50%).</p>
-            </div>
+    <div id="config-settings-panel">
+        <div class="hud-text-glow" style="font-size: 18px; margin-bottom: 20px; text-align: center; border-bottom: 1px dashed #00ff66; padding-bottom: 10px;">// SYSTEM_CONFIGURATION_UTILITY</div>
+        <div class="config-row">
+            <label style="font-size: 12px; font-weight: bold;">MOUSE LOOK SENSITIVITY:</label>
+            <input type="range" id="cfg-mouse-sens" class="config-slider" min="1" max="10" value="5">
         </div>
-
-        <div class="network-panel">
-            <label for="room-code-input" style="font-size: 0.8rem; font-weight: bold;">UNIFIED NETWORK ACCESS ENCRYPTION CODE:</label>
-            <div style="display: flex; gap: 10px; margin-top: 5px;">
-                <input type="text" id="room-code-input" class="net-input" value="LOB1" maxlength="6">
-                <button class="action-btn" style="padding: 5px 15px; font-size: 0.8rem;" onclick="connectToNetworkServer()">CONNECT ENGINE</button>
-            </div>
-            <div id="net-status-display" style="color:#ffaa00; font-size:0.75rem; margin-top:5px;">STATUS: LOCAL PREVIEW MODE ENABLED</div>
+        <div class="config-row">
+            <label style="font-size: 12px; font-weight: bold;">RENDER SCALE RATIO:</label>
+            <input type="range" id="cfg-render-scale" class="config-slider" min="5" max="10" value="10">
         </div>
-
-        <div style="display: flex; gap: 20px;">
-            <button class="action-btn" id="local-btn" onclick="initializeGameSession(true)">OFFLINE sandbox BOOT</button>
-            <button class="action-btn" id="launch-btn" disabled onclick="initializeGameSession(false)">BOOT NETWORK ENGINE</button>
+        <div class="config-row">
+            <label style="font-size: 12px; font-weight: bold;">AUDIO DIAGNOSTIC VOLUME:</label>
+            <input type="range" id="cfg-audio-gain" class="config-slider" min="0" max="10" value="7">
+        </div>
+        <div style="text-align: center; margin-top: 25px;">
+            <button class="btn-terminal-action" onclick="toggleConfigUtilityMenu(false)">APPLY SYSTEM PARAMS</button>
         </div>
     </div>
 
-    <div id="gameover-screen">
-        <h1>BIOMETRICS SEVERED</h1>
-        <p id="death-cause">YOU WERE PURSUED AND CONSUMED IN THE DARK.</p>
-        <button class="action-btn" style="border-color:#ff0000; color:#ff0000;" onclick="location.reload()">RE-INITIALIZE ENGINE</button>
+    <div id="hud-master-container">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <div>
+                <div id="hud-primary-objective-text" class="hud-text-glow" style="font-size: 15px;">OBJECTIVE: EXTRACT DECRYPT DATA CORES [0/4]</div>
+                <div id="hud-motion-tracker-readout" style="font-size: 11px; margin-top: 4px; color: #00aa44;">PROXIMITY RADAR MATRIX: SCANNING LINES CLEAR</div>
+                
+                <div id="inventory-hotbar">
+                    <div class="inv-slot active-slot" id="slot-1">
+                        <span class="inv-keybind">1</span>
+                        <span class="inv-icon" id="icon-slot-1">🔋</span>
+                        <span class="inv-count" id="count-slot-1">x3</span>
+                    </div>
+                    <div class="inv-slot" id="slot-2">
+                        <span class="inv-keybind">2</span>
+                        <span class="inv-icon" id="icon-slot-2">💉</span>
+                        <span class="inv-count" id="count-slot-2">x1</span>
+                    </div>
+                    <div class="inv-slot" id="slot-3">
+                        <span class="inv-keybind">3</span>
+                        <span class="inv-icon" id="icon-slot-3">🔑</span>
+                        <span class="inv-count" id="count-slot-3">x0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="vitals-panel">
+                <div class="bar-container">
+                    <span class="bar-label">STAMINA_LINE</span>
+                    <div class="bar-frame"><div id="fill-stamina" class="bar-fill"></div></div>
+                </div>
+                <div class="bar-container">
+                    <span class="bar-label">MENTAL_SANITY</span>
+                    <div class="bar-frame"><div id="fill-sanity" class="bar-fill"></div></div>
+                </div>
+                <div class="bar-container">
+                    <span class="bar-label">OPTIC_BLINK</span>
+                    <div class="bar-frame"><div id="fill-blink" class="bar-fill"></div></div>
+                </div>
+                <div class="bar-container">
+                    <span class="bar-label">CELL_BATTERY</span>
+                    <div class="bar-frame"><div id="fill-battery" class="bar-fill"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%;">
+            <div id="network-diagnostic-log"></div>
+            <div style="text-align: right; font-size: 11px; color: #00aa44;">
+                <div>HARDWARE INTERFACE: SECURE CHANNEL</div>
+                <div id="runtime-clock-readout">SYSTEM_UPTIME: 00:00:00</div>
+                <div style="margin-top: 5px; color:#fff; font-size:9px; pointer-events:auto; cursor:pointer; text-decoration:underline;" onclick="toggleConfigUtilityMenu(true)">[CONFIG_UTILITY]</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="engine-cold-boot-screen" class="overlay-fullscreen-curtain">
+        <h1 class="hud-text-glow" style="font-size: 3.5rem; margin-bottom: 5px; letter-spacing: 6px;">EREBUS.OS</h1>
+        <p style="color: #00aa44; font-size: 12px; letter-spacing: 2px;">COGNITIVE LABYRINTH ARCHITECTURE ENGINE // INITIALIZING RECOVERY SYSTEM</p>
+
+        <div class="class-selection-matrix">
+            <div class="class-selection-card active-selection" id="card-class-hazmat" onclick="selectOperativeClassProfile('hazmat')">
+                <div class="class-brand-title class-card-header">Hazmat Salvager</div>
+                <p class="class-card-desc">Sprinting kinetic mechanics upgraded: Speed allocation scaled +15%. Stamina depletion curves halved across sustained run matrices.</p>
+            </div>
+            <div class="class-selection-card" id="card-class-guard" onclick="selectOperativeClassProfile('guard')">
+                <div class="class-brand-title class-card-header">Security Enforcer</div>
+                <p class="class-card-desc">Illumination hardware modified: Heavy tactical light beam lumens doubled. Radial width expansion scaling factor increased +45%.</p>
+            </div>
+            <div class="class-selection-card" id="card-class-engineer" onclick="selectOperativeClassProfile('engineer')">
+                <div class="class-brand-title class-card-header">System Architect</div>
+                <p class="class-card-desc">Cryptographic terminal decryption processing accelerated: Structural computational velocity overclocks matrix processing parameters +50%.</p>
+            </div>
+        </div>
+
+        <div style="background: rgba(0, 12, 3, 0.9); border: 1px dashed #00aa44; padding: 20px; width: 100%; max-width: 550px; margin-bottom: 20px; pointer-events: auto;">
+            <label style="font-size: 11px; font-weight: bold; display: block; margin-bottom: 5px;">ENTER DISTRIBUTED SERVER NODE DEPLOYMENT ADDR CODE:</label>
+            <div style="display: flex; gap: 15px; justify-content: center; align-items: center;">
+                <input type="text" id="network-room-input-field" class="terminal-input-field" value="NODE_1" maxlength="8">
+                <button class="btn-terminal-action" style="padding: 7px 18px; margin-top: 0; font-size: 11px;" onclick="linkDistributedNetworkServerLine()">DIAL GATEWAY</button>
+            </div>
+            <div id="network-connection-status-readout" style="color: #ffaa00; font-size: 11px; margin-top: 10px; font-weight: bold;">LINK STATUS: STANDBY // RUNNING LOCAL SANDBOX MODES</div>
+        </div>
+
+        <div style="display: flex; gap: 20px; pointer-events: auto;">
+            <button class="btn-terminal-action" onclick="executeSystemColdBootLaunchLoop(true)">BOOT SANDBOX ENVIROMENT</button>
+            <button class="btn-terminal-action" id="btn-network-launch-trigger" disabled onclick="executeSystemColdBootLaunchLoop(false)">CONNECT COMBINED GRID</button>
+        </div>
+    </div>
+
+    <div id="gameover-diagnostic-panel">
+        <h1 style="font-size: 3.5rem; letter-spacing: 5px; font-weight: bold; margin-bottom: 10px; text-shadow: 0 0 15px #ff0000;">BIOMETRICS ABSENT</h1>
+        <p style="font-size: 12px; color: #ffaa44; letter-spacing: 1px;">COGNITIVE LOGIC DESTROYED BY GRID LEVEL CORRUPTION INTERFERENCE</p>
+
+        <div class="metrics-grid-summary">
+            <div>TOTAL MATRIX RUNTIME TIME:</div><div style="text-align: right; font-weight: bold; color: #ff3333;" id="stat-runtime-val">00:00</div>
+            <div>COMPLETED CORES DECRYPTED:</div><div style="text-align: right; font-weight: bold; color: #ff3333;" id="stat-cores-val">0 / 4</div>
+            <div>SECURITY KEYCARDS ACQUIRED:</div><div style="text-align: right; font-weight: bold; color: #ff3333;" id="stat-keys-val">0</div>
+            <div>TOTAL INJECTORS CONSUMED:</div><div style="text-align: right; font-weight: bold; color: #ff3333;" id="stat-inject-val">0</div>
+            <div>ANOMALY INTERCEPT PROXIMITY INDEX:</div><div style="text-align: right; font-weight: bold; color: #ff3333;" id="stat-proximity-val">0%</div>
+        </div>
+
+        <button class="btn-terminal-action" style="border-color: #ff3333; color: #ff3333;" onclick="location.reload()">RE-EXECUTE SYSTEM KERNEL</button>
     </div>
 
     <script>
-        const CELL_SIZE = 16;
-        const mapGrid = [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,1,0,0,0,0,1,2,0,0,0,0,1,0,0,0,1],
-            [1,0,1,0,1,0,1,1,0,1,1,1,1,0,0,1,0,1,0,1],
-            [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1],
-            [1,0,1,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,0,1],
-            [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
-            [1,1,1,0,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1],
-            [1,2,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,2,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        // Static Grid Maze System Map Setup Config Parameters
+        const MAZE_CELL_DIMENSION = 16;
+        const GRID_SYSTEM_MATRIX_MAP = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,1,0,0,0,0,1,2,0,0,0,0,1,0,0,0,1,0,0,0,2,1],
+            [1,0,1,0,1,0,1,1,0,1,1,1,1,0,0,1,0,1,0,1,1,1,0,1,1],
+            [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,1],
+            [1,0,1,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,1,0,1],
+            [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,4,1,0,0,1,0,1],
+            [1,1,1,0,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1,0,1],
+            [1,2,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,2,0,0,1,0,1,0,1],
+            [1,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1,0,1,0,1],
+            [1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1],
+            [1,0,1,0,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1,0,1,1,1,0,1],
+            [1,0,1,0,0,0,0,1,0,3,0,0,0,1,0,0,0,0,1,0,0,0,1,0,1],
+            [1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
         ];
 
-        let scene, camera, renderer, socket, clock;
-        let gameActive = false, roomCode = "", isLocalMode = true;
+        // Engine State Machine Matrices Properties
+        let scene, camera, renderer, socket, performanceClock;
+        let isSystemLoopActive = false, selectedRoomEncryptionCode = "", isLocalSandboxExecutionMode = true;
+        let sessionElapsedRunSeconds = 0, clockIntervalTrackingInstance = null;
+
+        // Player Structural State System Vectors
+        let activeSelectedClassProfileName = "hazmat";
+        let activeSelectedHotbarIndex = 1;
+        let mouseLookSensitivityMultiplier = 0.0022;
+        let renderingResolutionScaleRatio = 1.0;
+        let currentActiveInterfacedObjectRef = null;
+
+        // Real-Time Vital Level Values Storage Blocks
+        let vitalPlayerStamina = 100, vitalPlayerSanity = 100, vitalPlayerOpticBlink = 100, vitalPlayerBattery = 100;
+        let isStaminaCurveExhausted = false, isBlinkOpticClosureTriggered = false, isCrouchMovementActive = false;
+        let adrenalineInjectedBoostTimer = 0.0;
+        let cameraYawRotation = 0, cameraPitchRotation = 0;
         
-        // Game Objective Mechanics
-        let terminals = {}; 
-        let totalTerminals = 0;
-        let decryptedCount = 0;
-        let currentTargetTerminalId = null;
-        let decryptProgress = 0;
+        // Structural Position Coordinate Transforms
+        const playerPhysicsBody = {
+            pos: new THREE.Vector3(24, 3.2, 24),
+            radius: 1.4,
+            baseSpeed: 11.5,
+            sprintMultiplier: 1.62,
+            currentHeight: 3.6
+        };
 
-        // Player Attributes
-        let selectedClass = "hazmat";
-        let stamina = 100, sanity = 100, blinkMeter = 100;
-        let staminaExhausted = false, isBlinking = false;
-        let camYaw = 0, camPitch = 0;
-        const player = { pos: new THREE.Vector3(24, 2.5, 24), radius: 1.5, speed: 12.0, sprintSpeed: 18.0 };
-        let keys = { w: false, s: false, a: false, d: false, shift: false, e: false, ctrl: false };
+        // Master Input Key Registers Matrix Elements
+        const structuralInputMap = { w: false, s: false, a: false, d: false, shift: false, e: false, ctrl: false };
 
-        // Network Map Players
-        const remotePlayers = {};
-        let localFlashlight, flashlightBaseIntensity = 22;
+        // Network Operational Grid Entities Data Stores
+        const remoteDistributedPeerRegistry = {};
+        const simulatedSandboxCompanionBots = [];
+        let networkEngineFlashlightObject, structuralMaxIntensitySetting = 26;
 
-        // Monster Threat Structures
-        let thingEntity, prowlerEntity, shadowCloneEntity;
-        const thingAI = { pos: new THREE.Vector3(80, 0, 40), heading: new THREE.Vector3(1,0,0).normalize(), speed: 9.0 };
-        const prowlerAI = { pos: new THREE.Vector3(144, 0, 96), heading: new THREE.Vector3(0,0,-1).normalize(), speed: 10.5 };
-        const KILLBOX_RADIUS = 3.5;
+        // Interactive Object Asset Tracking Array Matrices
+        let dataCoresRegistry = {};
+        let structuralSecurityDoorsRegistry = [];
+        let itemsPickupMapMatrix = [];
+        let dynamicVolumetricFogParticleNodes = [];
 
-        // Audio System Components
-        let audioCtx, lastHeartbeatTime = 0, heartbeatInterval = 1.0;
-        let lastWhisperTime = 0, nextWhisperDelay = 5.0;
+        // Core Mission Tracking Quantizers
+        let absoluteCoresFoundCount = 0, absoluteCoresTotalCount = 0;
+        let matchCollectedKeycardsCount = 0, matchConsumedInjectorsCount = 0;
+        let maxProximityInterferenceStressFactor = 0.0;
 
-        function selectClass(className) {
-            document.querySelectorAll('.class-card').forEach(c => c.classList.remove('selected'));
-            document.getElementById(`char-${className}`).classList.add('selected');
-            selectedClass = className;
+        // Anomaly Monster Neural Network Routing AI Properties
+        let spatialThreatStalkerEntity, spatialThreatScreamerEntity, dynamicPhantomHallucinationEntity;
+        const stalkerAILogicEngine = { pos: new THREE.Vector3(120, 0, 48), trajectory: new THREE.Vector3(1,0,0).normalize(), movementVelocity: 8.5 };
+        const screamerAILogicEngine = { pos: new THREE.Vector3(240, 0, 96), trajectory: new THREE.Vector3(0,0,-1).normalize(), movementVelocity: 10.2 };
+        const ANOMALY_KILLBOX_THRESHOLD_LIMIT = 3.6;
+
+        // Hacking Puzzle State Tracker Block Properties
+        const hackingMinigameStateEngine = { active: false, objectiveSequence: [], contextInputIndex: 0, linkedCoreId: null };
+
+        // Audio System Process Node Architecture Properties
+        let browserAudioContextInstance = null, engineMasterGainNode = null;
+        let historicalHeartbeatExecutionTimestamp = 0, audioHeartbeatVariableInterval = 1.1;
+        let historicalWhisperExecutionTimestamp = 0, audioWhisperVariableInterval = 6.0;
+
+        // =========================================================================
+        // SECTION 1: IN-GAME INITIALIZATION AND COLD BOOT CODE ROUTINES
+        // =========================================================================
+        
+        function selectOperativeClassProfile(profileString) {
+            document.querySelectorAll('.class-selection-card').forEach(cardElement => cardElement.classList.remove('active-selection'));
+            document.getElementById(`card-class-${profileString}`).classList.add('active-selection');
+            activeSelectedClassProfileName = profileString;
         }
 
-        function connectToNetworkServer() {
-            roomCode = document.getElementById('room-code-input').value.trim().toUpperCase();
-            if(!roomCode) return;
+        function linkDistributedNetworkServerLine() {
+            selectedRoomEncryptionCode = document.getElementById('network-room-input-field').value.trim().toUpperCase();
+            if(!selectedRoomEncryptionCode) return;
+
+            const trackingStatusTextElement = document.getElementById('network-connection-status-readout');
+            trackingStatusTextElement.innerText = "ATTEMPTING GATEWAY ENCRYPTION EXCHANGES...";
+            trackingStatusTextElement.style.color = "#ffaa00";
 
             try {
-                socket = io('http://localhost:3000', { timeout: 3000 });
+                // Instantiating standard dynamic loop socket connections fallback interface patterns
+                socket = io('http://localhost:3000', { timeout: 2500, reconnection: false });
 
                 socket.on('connect', () => {
-                    isLocalMode = false;
-                    document.getElementById('net-status-display').innerText = `CONNECTED - ROOM: ${roomCode}`;
-                    document.getElementById('net-status-display').style.color = "#00ff00";
-                    document.getElementById('launch-btn').disabled = false;
-                    socket.emit('join_lobby', { roomCode, className: selectedClass, position: player.pos });
+                    isLocalSandboxExecutionMode = false;
+                    trackingStatusTextElement.innerText = `LINK SUCCESSFUL // NODE ACCESSED: ${selectedRoomEncryptionCode}`;
+                    trackingStatusTextElement.style.color = "#00ff66";
+                    document.getElementById('btn-network-launch-trigger').disabled = false;
+                    socket.emit('register_client_lobby', { selectedRoomEncryptionCode, activeSelectedClassProfileName, coordinates: playerPhysicsBody.pos });
                 });
 
                 socket.on('connect_error', () => {
-                    document.getElementById('net-status-display').innerText = "SERVER LINK FAILURE. FALLING BACK TO LOCAL.";
-                    document.getElementById('net-status-display').style.color = "#ff3333";
+                    trackingStatusTextElement.innerText = "DIAL FAILURE. LOCAL TESTING PREVIEW SIMULATION FORCED.";
+                    trackingStatusTextElement.style.color = "#ff3333";
                 });
 
-                socket.on('sync_initial_state', ({ terminals: decryptedMap }) => {
-                    Object.keys(decryptedMap).forEach(id => { markTerminalAsDecryptedLocal(id); });
-                });
-
-                socket.on('player_joined', (data) => {
-                    pushFeedLog("SYSTEM", `New live player sync verified inside matrix.`);
-                    updateRemotePlayerMeshes(data.players);
-                });
-
-                socket.on('player_moved', ({ id, position, yaw, isCrouching }) => {
-                    if (remotePlayers[id]) {
-                        remotePlayers[id].mesh.position.copy(position);
-                        remotePlayers[id].mesh.rotation.y = yaw;
-                        remotePlayers[id].mesh.scale.y = isCrouching ? 0.5 : 1.0;
+                socket.on('replicate_core_destruction', ({ coreId }) => { executeLocalCoreDecryptionMarking(coreId); });
+                socket.on('peer_disconnect_reception', ({ peerId }) => {
+                    if(remoteDistributedPeerRegistry[peerId]) {
+                        scene.remove(remoteDistributedPeerRegistry[peerId].visualMesh);
+                        delete remoteDistributedPeerRegistry[peerId];
+                        pushDiagnosticLogLine("NET", "Remote operative disconnected telemetry pipeline link.", "warn");
                     }
                 });
-
-                socket.on('sync_terminal', ({ terminalId }) => { markTerminalAsDecryptedLocal(terminalId); });
-
-                socket.on('player_left', ({ id }) => {
-                    if (remotePlayers[id]) {
-                        scene.remove(remotePlayers[id].mesh);
-                        delete remotePlayers[id];
-                        pushFeedLog("SYSTEM", "Operative dropped transmission line.");
-                    }
-                });
-
-                socket.on('player_eliminated', ({ id }) => {
-                    if (remotePlayers[id]) {
-                        scene.remove(remotePlayers[id].mesh);
-                        pushFeedLog("ALARM", "Team asset bio-signature flatlined.");
-                    }
-                });
-            } catch(e) {
-                console.log("Multiplayer server offline. Standing by in Sandbox mode.");
+            } catch(errorReference) {
+                trackingStatusTextElement.innerText = "HARDWARE NODE OFFLINE. CORE RUNNING SANDBOX ROUTINES.";
             }
         }
 
-        function updateRemotePlayerMeshes(playersData) {
-            Object.keys(playersData).forEach((id) => {
-                if (id === socket.id) return;
-                if (!remotePlayers[id]) {
-                    const group = new THREE.Group();
-                    const body = new THREE.Mesh(
-                        new THREE.BoxGeometry(1.6, 3.2, 1.6), 
-                        new THREE.MeshPhongMaterial({ color: 0x00aaff, emissive: 0x001133 })
-                    );
-                    body.position.y = 1.6;
-                    group.add(body);
-                    scene.add(group);
-                    remotePlayers[id] = { mesh: group };
-                }
-            });
-        }
+        function executeSystemColdBootLaunchLoop(forceSandboxState) {
+            if(forceSandboxState) isLocalSandboxExecutionMode = true;
+            document.getElementById('engine-cold-boot-screen').style.display = 'none';
 
-        function pushFeedLog(sender, message) {
-            const feed = document.getElementById('net-feed');
-            const entry = document.createElement('div');
-            entry.className = "net-msg";
-            entry.innerText = `[${sender}]: ${message}`;
-            feed.prepend(entry);
-        }
+            // Fire up Web Audio Synthesizer Interface Engine Contexts
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            browserAudioContextInstance = new AudioContextClass();
+            engineMasterGainNode = browserAudioContextInstance.createGain();
+            engineMasterGainNode.gain.setValueAtTime(0.7, browserAudioContextInstance.currentTime);
+            engineMasterGainNode.connect(browserAudioContextInstance.destination);
 
-        function initializeGameSession(forceLocal) {
-            if (forceLocal) isLocalMode = true;
-            document.getElementById('start-screen').style.display = 'none';
-            
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            setupAmbientEngine();
+            initializeSpatialAmbientDroneOscillator();
 
+            // Setup Three.js Production Rendering Pipeline Pipeline Channels
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x000000, 0.055);
+            scene.fog = new THREE.FogExp2(0x010c03, 0.062);
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 300);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 400);
             scene.add(camera);
 
-            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-viewport'), antialias: true });
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas-viewport'), antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-            buildEnvironmentMap();
-            generateMonsterThreatMeshes();
+            // Execute Environment Array Matrix Compilations
+            compileLabyrinthStructuralGridGeometry();
+            instantiateHorrorAnomalyThreatProfiles();
+            generateDynamicVolumetricFogGridMatrix();
+            populateLabyrinthItemPickupsMatrix();
 
-            localFlashlight = new THREE.SpotLight(0xffffff, flashlightBaseIntensity, 65, Math.PI / 5.5, 0.5, 1.0);
-            let targetObj = new THREE.Object3D();
-            targetObj.position.set(0, 0, -5);
-            camera.add(localFlashlight);
-            camera.add(targetObj);
-            localFlashlight.target = targetObj;
+            // Tactical Dynamic Directional Illumination Rigging Setup
+            networkEngineFlashlightObject = new THREE.SpotLight(0xffffff, structuralMaxIntensitySetting, 75, Math.PI / 6.0, 0.45, 1.1);
+            const lightTargetDumbObject = new THREE.Object3D();
+            lightTargetDumbObject.position.set(0, 0, -6);
+            camera.add(networkEngineFlashlightObject);
+            camera.add(lightTargetDumbObject);
+            networkEngineFlashlightObject.target = lightTargetDumbObject;
 
-            if(selectedClass === "guard") {
-                flashlightBaseIntensity = 45;
-                localFlashlight.intensity = flashlightBaseIntensity;
-                localFlashlight.angle = Math.PI / 3.5;
-                localFlashlight.distance = 90;
-            } else if(selectedClass === "hazmat") {
-                player.speed = 13.8;
-                player.sprintSpeed = 21.0;
+            // Class Specific Hardware Optimization Mapping Changes
+            if(activeSelectedClassProfileName === "guard") {
+                structuralMaxIntensitySetting = 52;
+                networkEngineFlashlightObject.intensity = structuralMaxIntensitySetting;
+                networkEngineFlashlightObject.angle = Math.PI / 4.0;
+                networkEngineFlashlightObject.distance = 110;
+            } else if(activeSelectedClassProfileName === "hazmat") {
+                playerPhysicsBody.baseSpeed = 13.22;
+                playerPhysicsBody.sprintMultiplier = 1.75;
             }
 
-            window.addEventListener('keydown', (e) => handleKey(e, true));
-            window.addEventListener('keyup', (e) => handleKey(e, false));
+            // Build out Simulated Sandbox Companion Bots array matrices if sandbox selected
+            if(isLocalSandboxExecutionMode) {
+                instantiateCompanionSimulationMatrices();
+            }
+
+            // Setup Structural Core Keybind Listeners Mapping
+            window.addEventListener('keydown', (e) => processKeyboardInputStateUpdate(e, true));
+            window.addEventListener('keyup', (e) => processKeyboardInputStateUpdate(e, false));
+            window.addEventListener('resize', executeViewportResolutionRecalculationHandler);
             
             document.body.requestPointerLock();
-            document.body.addEventListener('click', () => { document.body.requestPointerLock(); });
-            
-            document.addEventListener('mousemove', (e) => {
-                if (document.pointerLockElement !== document.body) return;
-                camYaw -= e.movementX * 0.0022;
-                camPitch -= e.movementY * 0.0022;
-                camPitch = Math.max(-Math.PI/2.3, Math.min(Math.PI/2.3, camPitch));
+            document.body.addEventListener('click', () => {
+                if(!hackingMinigameStateEngine.active && document.getElementById('config-settings-panel').style.display !== 'block') {
+                    document.body.requestPointerLock();
+                }
             });
 
-            gameActive = true;
-            clock = new THREE.Clock();
-            animateLoop();
+            document.addEventListener('mousemove', (mouseEventUpdate) => {
+                if(document.pointerLockElement !== document.body) return;
+                cameraYawRotation -= mouseEventUpdate.movementX * mouseLookSensitivityMultiplier;
+                cameraPitchRotation -= mouseEventUpdate.movementY * mouseLookSensitivityMultiplier;
+                cameraPitchRotation = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, cameraPitchRotation));
+            });
+
+            // Start Runtime Engine Sequence Threads
+            isSystemLoopActive = true;
+            performanceClock = new THREE.Clock();
+            
+            clockIntervalTrackingInstance = setInterval(() => {
+                sessionElapsedRunSeconds++;
+                const outputHours = Math.floor(sessionElapsedRunSeconds / 3600).toString().padStart(2, '0');
+                const outputMins = Math.floor((sessionElapsedRunSeconds % 3600) / 60).toString().padStart(2, '0');
+                const outputSecs = (sessionElapsedRunSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('runtime-clock-readout').innerText = `SYSTEM_UPTIME: ${outputHours}:${outputMins}:${outputSecs}`;
+            }, 1000);
+
+            pushDiagnosticLogLine("SYS", "EREBUS COLD CORE BOOT SEQUENCE STABLE. GRID LINK ACQUIRED.", "sys");
+            executeMasterGameEngineLoopFrame();
         }
 
-        function setupAmbientEngine() {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            let filter = audioCtx.createBiquadFilter();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(32.0, audioCtx.currentTime);
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(70, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-            osc.connect(filter).connect(gain).connect(audioCtx.destination);
-            osc.start();
+        // =========================================================================
+        // SECTION 2: HARDWARE SYNTHESIZER AND AUDIO DIAGNOSTIC ENGINE
+        // =========================================================================
+        
+        function initializeSpatialAmbientDroneOscillator() {
+            try {
+                const toneOscillatorNode = browserAudioContextInstance.createOscillator();
+                const primaryLowpassFilterNode = browserAudioContextInstance.createBiquadFilter();
+                const localizedDroneVolumeGainNode = browserAudioContextInstance.createGain();
+
+                toneOscillatorNode.type = 'sawtooth';
+                toneOscillatorNode.frequency.setValueAtTime(34.0, browserAudioContextInstance.currentTime);
+                
+                primaryLowpassFilterNode.type = 'lowpass';
+                primaryLowpassFilterNode.frequency.setValueAtTime(65, browserAudioContextInstance.currentTime);
+
+                localizedDroneVolumeGainNode.gain.setValueAtTime(0.35, browserAudioContextInstance.currentTime);
+
+                toneOscillatorNode.connect(primaryLowpassFilterNode);
+                primaryLowpassFilterNode.connect(localizedDroneVolumeGainNode);
+                localizedDroneVolumeGainNode.connect(engineMasterGainNode);
+
+                toneOscillatorNode.start();
+            } catch(e) { console.error("Audio Synthesis Driver Initialisation Error."); }
         }
 
-        function triggerHeartbeatPulse() {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(50, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(8, audioCtx.currentTime + 0.18);
-            gain.gain.setValueAtTime(0.45, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-            osc.connect(gain).connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.22);
+        function triggerProceduralAudioHeartbeatPulse() {
+            try {
+                const pulseOscillatorNode = browserAudioContextInstance.createOscillator();
+                const transientVolumeGainNode = browserAudioContextInstance.createGain();
+
+                pulseOscillatorNode.type = 'sine';
+                pulseOscillatorNode.frequency.setValueAtTime(55.0, browserAudioContextInstance.currentTime);
+                pulseOscillatorNode.frequency.exponentialRampToValueAtTime(10.0, browserAudioContextInstance.currentTime + 0.22);
+
+                transientVolumeGainNode.gain.setValueAtTime(0.55, browserAudioContextInstance.currentTime);
+                transientVolumeGainNode.gain.linearRampToValueAtTime(0.001, browserAudioContextInstance.currentTime + 0.24);
+
+                pulseOscillatorNode.connect(transientVolumeGainNode);
+                transientVolumeGainNode.connect(engineMasterGainNode);
+
+                pulseOscillatorNode.start();
+                pulseOscillatorNode.stop(browserAudioContextInstance.currentTime + 0.26);
+            } catch(e) {}
         }
 
-        function triggerSpatialWhisper() {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            let panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+        function triggerSpatialWhisperRadioStaticCrack() {
+            try {
+                const voiceOscillatorNode = browserAudioContextInstance.createOscillator();
+                const staticModulatorGainNode = browserAudioContextInstance.createGain();
+                const stereoFieldPanningNode = browserAudioContextInstance.createStereoPanner ? browserAudioContextInstance.createStereoPanner() : null;
 
-            osc.type = Math.random() > 0.5 ? 'triangle' : 'sine';
-            osc.frequency.setValueAtTime(200 + Math.random() * 400, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 1.2);
-            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 1.2);
+                voiceOscillatorNode.type = Math.random() > 0.5 ? 'triangle' : 'sine';
+                voiceOscillatorNode.frequency.setValueAtTime(260.0 + Math.random() * 300.0, browserAudioContextInstance.currentTime);
+                voiceOscillatorNode.frequency.linearRampToValueAtTime(75.0, browserAudioContextInstance.currentTime + 1.4);
 
-            const panDirection = Math.random() > 0.5 ? -1.0 : 1.0;
-            if (panner) {
-                panner.pan.setValueAtTime(panDirection, audioCtx.currentTime);
-                osc.connect(panner).connect(gain).connect(audioCtx.destination);
-            } else {
-                osc.connect(gain).connect(audioCtx.destination);
-            }
-            osc.start();
-            osc.stop(audioCtx.currentTime + 1.3);
+                staticModulatorGainNode.gain.setValueAtTime(0.09, browserAudioContextInstance.currentTime);
+                staticModulatorGainNode.gain.linearRampToValueAtTime(0.001, browserAudioContextInstance.currentTime + 1.4);
+
+                const radialPanVector = Math.random() > 0.5 ? -1.0 : 1.0;
+                if(stereoFieldPanningNode) {
+                    stereoFieldPanningNode.pan.setValueAtTime(radialPanVector, browserAudioContextInstance.currentTime);
+                    voiceOscillatorNode.connect(stereoFieldPanningNode);
+                    stereoFieldPanningNode.connect(staticModulatorGainNode);
+                } else {
+                    voiceOscillatorNode.connect(staticModulatorGainNode);
+                }
+
+                staticModulatorGainNode.connect(engineMasterGainNode);
+                voiceOscillatorNode.start();
+                voiceOscillatorNode.stop(browserAudioContextInstance.currentTime + 1.5);
+            } catch(e) {}
         }
 
-        function buildEnvironmentMap() {
-            const wallMat = new THREE.MeshPhongMaterial({ color: 0x080f08, shininess: 2 });
-            const floorMat = new THREE.MeshPhongMaterial({ color: 0x030403, roughness: 0.9 });
-            const wallGeo = new THREE.BoxGeometry(CELL_SIZE, CELL_SIZE * 1.5, CELL_SIZE);
+        // =========================================================================
+        // SECTION 3: LABYRiNTH ENVIRONMENT GENERATION ENGINE MATRICES
+        // =========================================================================
+        
+        function compileLabyrinthStructuralGridGeometry() {
+            const architecturalWallMaterial = new THREE.MeshPhongMaterial({ color: 0x060f0a, shininess: 4, bumpScale: 0.1 });
+            const metallicFloorMaterial = new THREE.MeshPhongMaterial({ color: 0x020603, roughness: 0.85 });
+            const ceilingPlateMaterial = new THREE.MeshPhongMaterial({ color: 0x010402 });
+            
+            const wallCubeGeometryBlock = new THREE.BoxGeometry(MAZE_CELL_DIMENSION, MAZE_CELL_DIMENSION * 1.8, MAZE_CELL_DIMENSION);
 
-            for(let r=0; r<mapGrid.length; r++) {
-                for(let c=0; c<mapGrid[r].length; c++) {
-                    let x = c * CELL_SIZE + CELL_SIZE/2;
-                    let z = r * CELL_SIZE + CELL_SIZE/2;
-                    if(mapGrid[r][c] === 1) {
-                        let wMesh = new THREE.Mesh(wallGeo, wallMat);
-                        wMesh.position.set(x, (CELL_SIZE * 1.5)/2, z);
-                        scene.add(wMesh);
+            for(let gridRowIndex = 0; gridRowIndex < GRID_SYSTEM_MATRIX_MAP.length; gridRowIndex++) {
+                for(let gridColIndex = 0; gridColIndex < GRID_SYSTEM_MATRIX_MAP[gridRowIndex].length; gridColIndex++) {
+                    const worldCoordinateTransformX = gridColIndex * MAZE_CELL_DIMENSION + MAZE_CELL_DIMENSION / 2;
+                    const worldCoordinateTransformZ = gridRowIndex * MAZE_CELL_DIMENSION + MAZE_CELL_DIMENSION / 2;
+                    const tileMarkerPropertyValue = GRID_SYSTEM_MATRIX_MAP[gridRowIndex][gridColIndex];
+
+                    if(tileMarkerPropertyValue === 1) {
+                        const dynamicWallMeshInstance = new THREE.Mesh(wallCubeGeometryBlock, architecturalWallMaterial);
+                        dynamicWallMeshInstance.position.set(worldCoordinateTransformX, (MAZE_CELL_DIMENSION * 1.8) / 2, worldCoordinateTransformZ);
+                        scene.add(dynamicWallMeshInstance);
                     } else {
-                        let fMesh = new THREE.Mesh(new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE), floorMat);
-                        fMesh.rotation.x = -Math.PI/2;
-                        fMesh.position.set(x, 0, z);
-                        scene.add(fMesh);
+                        // Generate Floor Sheets
+                        const structuralFloorMesh = new THREE.Mesh(new THREE.PlaneGeometry(MAZE_CELL_DIMENSION, MAZE_CELL_DIMENSION), metallicFloorMaterial);
+                        structuralFloorMesh.rotation.x = -Math.PI / 2;
+                        structuralFloorMesh.position.set(worldCoordinateTransformX, 0, worldCoordinateTransformZ);
+                        scene.add(structuralFloorMesh);
 
-                        if(mapGrid[r][c] === 2) {
-                            totalTerminals++;
-                            let termId = `t_${r}_${c}`;
-                            let tGeo = new THREE.BoxGeometry(3, 4, 3);
-                            let tMat = new THREE.MeshPhongMaterial({ color: 0x005500, emissive: 0x002200 });
-                            let tMesh = new THREE.Mesh(tGeo, tMat);
-                            tMesh.position.set(x, 2, z);
-                            scene.add(tMesh);
-                            terminals[termId] = { id: termId, pos: new THREE.Vector3(x, 2, z), mesh: tMesh, decrypted: false };
+                        // Generate Roof Shell Plates
+                        const ceilingMeshInstance = new THREE.Mesh(new THREE.PlaneGeometry(MAZE_CELL_DIMENSION, MAZE_CELL_DIMENSION), ceilingPlateMaterial);
+                        ceilingMeshInstance.rotation.x = Math.PI / 2;
+                        ceilingMeshInstance.position.set(worldCoordinateTransformX, MAZE_CELL_DIMENSION * 1.8, worldCoordinateTransformZ);
+                        scene.add(ceilingMeshInstance);
+
+                        // Feature Allocation 1: Data Cores Terminal Generation Mapping Nodes [2]
+                        if(tileMarkerPropertyValue === 2) {
+                            absoluteCoresTotalCount++;
+                            const terminalIdentityCode = `core_node_${gridRowIndex}_${gridColIndex}`;
+                            
+                            const coreTerminalGeometryBox = new THREE.BoxGeometry(3.5, 4.8, 3.5);
+                            const coreTerminalActiveMaterial = new THREE.MeshPhongMaterial({ color: 0x003b11, emissive: 0x001103 });
+                            const coreTerminalMesh = new THREE.Mesh(coreTerminalGeometryBox, coreTerminalActiveMaterial);
+                            coreTerminalMesh.position.set(worldCoordinateTransformX, 2.4, worldCoordinateTransformZ);
+                            scene.add(coreTerminalMesh);
+
+                            // Affix localized green emitter signal bulb mesh overlays
+                            const coreSignalBulbGeometry = new THREE.SphereGeometry(0.3, 8, 8);
+                            const coreSignalBulbMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff66 });
+                            const bulbMesh = new THREE.Mesh(coreSignalBulbGeometry, coreSignalBulbMaterial);
+                            bulbMesh.position.set(worldCoordinateTransformX, 5.0, worldCoordinateTransformZ);
+                            scene.add(bulbMesh);
+
+                            dataCoresRegistry[terminalIdentityCode] = {
+                                id: terminalIdentityCode,
+                                positionVector: new THREE.Vector3(worldCoordinateTransformX, 2.4, worldCoordinateTransformZ),
+                                primaryMesh: coreTerminalMesh,
+                                coreBulbMesh: bulbMesh,
+                                isFullyDecrypted: false
+                            };
+                        }
+
+                        // Feature Allocation 2: Keycard Key Lock Pneumatic Doors System Assembly [3]
+                        if(tileMarkerPropertyValue === 3) {
+                            const slidingPneumaticDoorAssemblyGroup = new THREE.Group();
+                            const physicalDoorBladeMesh = new THREE.Mesh(new THREE.BoxGeometry(MAZE_CELL_DIMENSION, 10, 2), new THREE.MeshPhongMaterial({ color: 0x1c1f1d, specular: 0x555555 }));
+                            physicalDoorBladeMesh.position.y = 5;
+                            slidingPneumaticDoorAssemblyGroup.add(physicalDoorBladeMesh);
+                            slidingPneumaticDoorAssemblyGroup.position.set(worldCoordinateTransformX, 0, worldCoordinateTransformZ);
+                            
+                            scene.add(slidingPneumaticDoorAssemblyGroup);
+                            structuralSecurityDoorsRegistry.push({
+                                structuralGroup: slidingPneumaticDoorAssemblyGroup,
+                                positionVector: new THREE.Vector3(worldCoordinateTransformX, 0, worldCoordinateTransformZ),
+                                isDoorOpen: false,
+                                physicalOpenInterpolationOffset: 0.0,
+                                codeAccessKeyRequirement: "SECURITY_RED_CARD"
+                            });
                         }
                     }
                 }
             }
-            document.getElementById('objective').innerText = `OBJECTIVE: DECRYPT DATA CORES [0/${totalTerminals}]`;
-            scene.add(new THREE.AmbientLight(0x010201));
+
+            document.getElementById('hud-primary-objective-text').innerText = `OBJECTIVE: EXTRACT DECRYPT DATA CORES [0/${absoluteCoresTotalCount}]`;
+            
+            // Build Base Ambient Light Fields
+            scene.add(new THREE.AmbientLight(0x010502));
         }
 
-        function generateMonsterThreatMeshes() {
-            thingEntity = new THREE.Group();
-            let tBody = new THREE.Mesh(new THREE.BoxGeometry(2.4, 6, 2.4), new THREE.MeshPhongMaterial({ color: 0x3a0000, emissive: 0x110000 }));
-            tBody.position.y = 3;
-            thingEntity.add(tBody);
-            scene.add(thingEntity);
+        function instantiateHorrorAnomalyThreatProfiles() {
+            // Threat Profile 1: The Stalker Entity Body Generation [Dark Burgundy Poly-box Mesh]
+            spatialThreatStalkerEntity = new THREE.Group();
+            const stalkerTorsoMesh = new THREE.Mesh(new THREE.BoxGeometry(3.0, 7.5, 3.0), new THREE.MeshPhongMaterial({ color: 0x220202, emissive: 0x080000 }));
+            stalkerTorsoMesh.position.y = 3.75;
+            spatialThreatStalkerEntity.add(stalkerTorsoMesh);
+            
+            // Append twin red ocular scanning laser light source dots
+            const ocularEyeGeometry = new THREE.SphereGeometry(0.25, 6, 6);
+            const ocularEyeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const leftEyeMesh = new THREE.Mesh(ocularEyeGeometry, ocularEyeMaterial); leftEyeMesh.position.set(-0.8, 6.8, 1.5);
+            const rightEyeMesh = new THREE.Mesh(ocularEyeGeometry, ocularEyeMaterial); rightEyeMesh.position.set(0.8, 6.8, 1.5);
+            spatialThreatStalkerEntity.add(leftEyeMesh, rightEyeMesh);
+            scene.add(spatialThreatStalkerEntity);
 
-            prowlerEntity = new THREE.Group();
-            let pBody = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.8, 4.5), new THREE.MeshPhongMaterial({ color: 0x02050a, emissive: 0x000105 }));
-            pBody.position.y = 0.9;
-            prowlerEntity.add(pBody);
-            scene.add(prowlerEntity);
+            // Threat Profile 2: The Screamer Entity Model Assemblies [Low Profile Spider Crawler Geometry Mesh]
+            spatialThreatScreamerEntity = new THREE.Group();
+            const screamerLowChassisBoxMesh = new THREE.Mesh(new THREE.BoxGeometry(4.5, 2.0, 5.5), new THREE.MeshPhongMaterial({ color: 0x020814, emissive: 0x000208 }));
+            screamerLowChassisBoxMesh.position.y = 1.0;
+            spatialThreatScreamerEntity.add(screamerLowChassisBoxMesh);
+            scene.add(spatialThreatScreamerEntity);
 
-            shadowCloneEntity = new THREE.Mesh(
-                new THREE.BoxGeometry(2, 5, 2),
-                new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.0 })
+            // Threat Profile 3: Mental Sanity Static Illusion Clone Overlay Placeholder Mesh Object
+            dynamicPhantomHallucinationEntity = new THREE.Mesh(
+                new THREE.BoxGeometry(2.6, 6.8, 2.6),
+                new THREE.MeshBasicMaterial({ color: 0xff0055, transparent: true, opacity: 0.0, wireframe: true })
             );
-            scene.add(shadowCloneEntity);
+            scene.add(dynamicPhantomHallucinationEntity);
         }
 
-        function handleKey(e, isDown) {
-            let k = e.key.toLowerCase();
-            if(k === 'w') keys.w = isDown;
-            if(k === 's') keys.s = isDown;
-            if(k === 'a') keys.a = isDown;
-            if(k === 'd') keys.d = isDown;
-            if(k === 'e') keys.e = isDown;
-            if(e.shiftKey !== undefined) keys.shift = e.shiftKey;
-            if(e.key === 'Control') keys.ctrl = isDown;
+        function generateDynamicVolumetricFogGridMatrix() {
+            const fogParticleVolumeGeometry = new THREE.SphereGeometry(3.5, 5, 5);
+            const fogGasMaterialInstance = new THREE.MeshBasicMaterial({ color: 0x00ff44, transparent: true, opacity: 0.032, depthWrite: false });
+
+            // Space 25 cloud instances spread throughout structural floor grid channels
+            for(let fogNodeIndex = 0; fogNodeIndex < 25; fogNodeIndex++) {
+                const randomizedFogMeshNode = new THREE.Mesh(fogParticleVolumeGeometry, fogGasMaterialInstance);
+                const assignedCoordinateX = 30.0 + Math.random() * 260.0;
+                const assignedCoordinateZ = 30.0 + Math.random() * 150.0;
+                
+                randomizedFogMeshNode.position.set(assignedCoordinateX, 0.4 + Math.random() * 1.5, assignedCoordinateZ);
+                scene.add(randomizedFogMeshNode);
+                
+                dynamicVolumetricFogParticleNodes.push({
+                    meshReference: randomizedFogMeshNode,
+                    phaseAngleOffset: Math.random() * Math.PI * 2,
+                    driftVelocityScalar: 0.2 + Math.random() * 0.5
+                });
+            }
         }
 
-        function verifyStaticMapCollisions(pos, radius) {
-            let c = Math.floor(pos.x / CELL_SIZE);
-            let r = Math.floor(pos.z / CELL_SIZE);
-            for(let i = -1; i <= 1; i++) {
-                for(let j = -1; j <= 1; j++) {
-                    let checkR = r + i;
-                    let checkC = c + j;
-                    if(checkR >= 0 && checkR < mapGrid.length && checkC >= 0 && checkC < mapGrid[0].length) {
-                        if(mapGrid[checkR][checkC] === 1) {
-                            let wX = checkC * CELL_SIZE + CELL_SIZE/2;
-                            let wZ = checkR * CELL_SIZE + CELL_SIZE/2;
-                            if (pos.x > wX - CELL_SIZE/2 - radius && pos.x < wX + CELL_SIZE/2 + radius &&
-                                pos.z > wZ - CELL_SIZE/2 - radius && pos.z < wZ + CELL_SIZE/2 + radius) {
+        function populateLabyrinthItemPickupsMatrix() {
+            const securityCardGeometryBox = new THREE.BoxGeometry(1.5, 0.1, 1.0);
+            const cellularBatteryPodGeometry = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 6);
+            const autoinjectorAmpouleGeometry = new THREE.CylinderGeometry(0.2, 0.2, 1.6, 5);
+
+            // Feature System Placement Mapping: Fixed Coordinates for target operational pickups inside corridors
+            const itemSpawnConfigDataCoordinates = [
+                { type: "CELL_BATTERY", pos: new THREE.Vector3(72, 1.0, 24), mesh: new THREE.Mesh(cellularBatteryPodGeometry, new THREE.MeshPhongMaterial({ color: 0xffffff, emissive: 0x333333 })) },
+                { type: "CELL_BATTERY", pos: new THREE.Vector3(160, 1.0, 80), mesh: new THREE.Mesh(cellularBatteryPodGeometry, new THREE.MeshPhongMaterial({ color: 0xffffff, emissive: 0x333333 })) },
+                { type: "ADRENALINE_INJECTOR", pos: new THREE.Vector3(220, 1.0, 32), mesh: new THREE.Mesh(autoinjectorAmpouleGeometry, new THREE.MeshPhongMaterial({ color: 0x00ffff, emissive: 0x003333 })) },
+                { type: "SECURITY_RED_CARD", pos: new THREE.Vector3(144, 0.6, 96), mesh: new THREE.Mesh(securityCardGeometryBox, new THREE.MeshBasicMaterial({ color: 0xff0033 })) }
+            ];
+
+            itemSpawnConfigDataCoordinates.forEach(spawnRecord => {
+                spawnRecord.mesh.position.copy(spawnRecord.pos);
+                scene.add(spawnRecord.mesh);
+                itemsPickupMapMatrix.push({
+                    itemTypeString: spawnRecord.type,
+                    currentPositionVector: spawnRecord.pos,
+                    visualMeshObjectRef: spawnRecord.mesh,
+                    isCollectedByClient: false
+                });
+            });
+        }
+
+        function instantiateCompanionSimulationMatrices() {
+            const companionBotMaterialModel = new THREE.MeshPhongMaterial({ color: 0x0088aa });
+            const companionBoxGeometry = new THREE.BoxGeometry(2.0, 6.0, 2.0);
+
+            const botAlphaMeshInstance = new THREE.Mesh(companionBoxGeometry, companionBotMaterialModel);
+            botAlphaMeshInstance.position.set(40, 3, 40);
+            scene.add(botAlphaMeshInstance);
+
+            simulatedSandboxCompanionBots.push({
+                identifierString: "OPERATIVE_02",
+                visualMeshReference: botAlphaMeshInstance,
+                positionTrackingVector: new THREE.Vector3(40, 3, 40),
+                internalNavigationTarget: new THREE.Vector3(80, 0, 80),
+                routingVelocityScalar: 6.5
+            });
+        }
+
+        // =========================================================================
+        // SECTION 4: PHYSICS INPUT MAPPINGS & WALL COLLISION MATRICES
+        // =========================================================================
+        
+        function processKeyboardInputStateUpdate(keyboardEvent, isKeyPressedDown) {
+            const targetedKeyString = keyboardEvent.key.toLowerCase();
+            
+            if(targetedKeyString === 'w' || keyboardEvent.key === 'ArrowUp') structuralInputMap.w = isKeyPressedDown;
+            if(targetedKeyString === 's' || keyboardEvent.key === 'ArrowDown') structuralInputMap.s = isKeyPressedDown;
+            if(targetedKeyString === 'a' || keyboardEvent.key === 'ArrowLeft') structuralInputMap.a = isKeyPressedDown;
+            if(targetedKeyString === 'd' || keyboardEvent.key === 'ArrowRight') structuralInputMap.d = isKeyPressedDown;
+            if(targetedKeyString === 'e') structuralInputMap.e = isKeyPressedDown;
+            if(keyboardEvent.key === 'Shift') structuralInputMap.shift = isKeyPressedDown;
+            if(keyboardEvent.key === 'Control') {
+                structuralInputMap.ctrl = isKeyPressedDown;
+                isCrouchMovementActive = isKeyPressedDown;
+            }
+
+            // Inventory Hotbar Keyboard Mapping Selectors
+            if(isKeyPressedDown && ['1','2','3'].includes(targetedKeyString)) {
+                activeSelectedHotbarIndex = parseInt(targetedKeyString);
+                document.querySelectorAll('.inv-slot').forEach(slot => slot.classList.remove('active-slot'));
+                document.getElementById(`slot-${activeSelectedHotbarIndex}`).classList.add('active-slot');
+                pushDiagnosticLogLine("SYS", `Equipped hotbar storage system container cell index: ${activeSelectedHotbarIndex}`, "sys");
+                
+                // Active Use Mechanics Logic triggers on hotbar invocation selection keys
+                executeHotbarItemDeploymentActionSubroutine();
+            }
+        }
+
+        function verifyLabyrinthStaticWallCollisionVectors(targetCoordinateVector, playerBoundaryRadius) {
+            const columnGridIndex = Math.floor(targetCoordinateVector.x / MAZE_CELL_DIMENSION);
+            const rowGridIndex = Math.floor(targetCoordinateVector.z / MAZE_CELL_DIMENSION);
+
+            // Bounds constraints checks
+            if(rowGridIndex < 0 || rowGridIndex >= GRID_SYSTEM_MATRIX_MAP.length || columnGridIndex < 0 || columnGridIndex >= GRID_SYSTEM_MATRIX_MAP[0].length) return true;
+
+            for(let rowOffset = -1; rowOffset <= 1; rowOffset++) {
+                for(let colOffset = -1; colOffset <= 1; colOffset++) {
+                    const evaluatedRowIndex = rowGridIndex + rowOffset;
+                    const evaluatedColIndex = columnGridIndex + colOffset;
+
+                    if(evaluatedRowIndex >= 0 && evaluatedRowIndex < GRID_SYSTEM_MATRIX_MAP.length && evaluatedColIndex >= 0 && evaluatedColIndex < GRID_SYSTEM_MATRIX_MAP[0].length) {
+                        const cellContentsIndex = GRID_SYSTEM_MATRIX_MAP[evaluatedRowIndex][evaluatedColIndex];
+                        
+                        // Treat structural wall grid indices [1] as solid static wall bounding box block meshes
+                        if(cellContentsIndex === 1) {
+                            const boundingBoxCenterX = evaluatedColIndex * MAZE_CELL_DIMENSION + MAZE_CELL_DIMENSION / 2;
+                            const boundingBoxCenterZ = evaluatedRowIndex * MAZE_CELL_DIMENSION + MAZE_CELL_DIMENSION / 2;
+                            
+                            if (targetCoordinateVector.x > boundingBoxCenterX - MAZE_CELL_DIMENSION / 2 - playerBoundaryRadius &&
+                                targetCoordinateVector.x < boundingBoxCenterX + MAZE_CELL_DIMENSION / 2 + playerBoundaryRadius &&
+                                targetCoordinateVector.z > boundingBoxCenterZ - MAZE_CELL_DIMENSION / 2 - playerBoundaryRadius &&
+                                targetCoordinateVector.z < boundingBoxCenterZ + MAZE_CELL_DIMENSION / 2 + playerBoundaryRadius) {
                                 return true;
                             }
                         }
                     }
                 }
             }
+
+            // Realtime Security Door Check Intersect Blockings
+            for(let doorIndex = 0; doorIndex < structuralSecurityDoorsRegistry.push; doorIndex++) {
+                const targetDoorRef = structuralSecurityDoorsRegistry[doorIndex];
+                if(targetDoorRef && !targetDoorRef.isDoorOpen) {
+                    const structuralDistanceToDoorBlade = targetCoordinateVector.distanceTo(targetDoorRef.positionVector);
+                    if(structuralDistanceToDoorBlade < (MAZE_CELL_DIMENSION / 2.0 + playerBoundaryRadius)) {
+                        return true;
+                    }
+                }
+            }
+
             return false;
         }
 
-        function executeAIPositionSliding(currentPos, velocity, radius, aiHeading) {
-            let nextPos = currentPos.clone().add(velocity);
-            if(!verifyStaticMapCollisions(nextPos, radius)) return nextPos;
+        function calculateSlidingPhysicsMovementVector(currentPosVector, proposedVelocityDelta, dynamicRadiusSize, headingTrajectoryMatrixRef) {
+            let directCalculatedNextPosition = currentPosVector.clone().add(proposedVelocityDelta);
+            if(!verifyLabyrinthStaticWallCollisionVectors(directCalculatedNextPosition, dynamicRadiusSize)) return directCalculatedNextPosition;
 
-            let testX = currentPos.clone().add(new THREE.Vector3(velocity.x, 0, 0));
-            if(!verifyStaticMapCollisions(testX, radius)) return testX;
+            // X-Axis Vector Slide Resolution Matrix
+            let testXAxisTransformPosition = currentPosVector.clone().add(new THREE.Vector3(proposedVelocityDelta.x, 0, 0));
+            if(!verifyLabyrinthStaticWallCollisionVectors(testXAxisTransformPosition, dynamicRadiusSize)) return testXAxisTransformPosition;
 
-            let testZ = currentPos.clone().add(new THREE.Vector3(0, 0, velocity.z));
-            if(!verifyStaticMapCollisions(testZ, radius)) return testZ;
+            // Z-Axis Vector Slide Resolution Matrix
+            let testZAxisTransformPosition = currentPosVector.clone().add(new THREE.Vector3(0, 0, proposedVelocityDelta.z));
+            if(!verifyLabyrinthStaticWallCollisionVectors(testZAxisTransformPosition, dynamicRadiusSize)) return testZAxisTransformPosition;
 
-            if(aiHeading) {
-                let randAngle = Math.random() * Math.PI * 2;
-                aiHeading.set(Math.sin(randAngle), 0, Math.cos(randAngle)).normalize();
+            // Trigger AI routing alternate trajectories redirect mappings if boundary trace blocks heading path
+            if(headingTrajectoryMatrixRef) {
+                const randomizedRadianAngle = Math.random() * Math.PI * 2.0;
+                headingTrajectoryMatrixRef.set(Math.sin(randomizedRadianAngle), 0.0, Math.cos(randomizedRadianAngle)).normalize();
             }
-            return currentPos;
+            return currentPosVector;
         }
 
-        function executeAbsoluteKillboxScare(attackerName) {
-            gameActive = false;
-            document.getElementById('death-cause').innerText = `CRITICAL FAILURE: BIO-SIGNALS SEVERED BY ${attackerName}.`;
-            if(!isLocalMode && socket && socket.connected) socket.emit('player_died', { roomCode });
-
-            document.getElementById('jumpscare-overlay').classList.add('jumpscare-active');
-            document.getElementById('jumpscare-face').style.display = "block";
-            
-            let scaleTime = 0;
-            function runScareAnimation() {
-                if(scaleTime > 1.2) {
-                    document.getElementById('jumpscare-overlay').classList.remove('jumpscare-active');
-                    document.getElementById('jumpscare-face').style.display = "none";
-                    document.getElementById('gameover-screen').style.display = 'flex';
-                    document.exitPointerLock();
-                    return;
+        // =========================================================================
+        // SECTION 5: INTERACTION OBJECTS & ITEM DEPLOYMENT ENGINE SUBROUTINES
+        // =========================================================================
+        
+        function executeHotbarItemDeploymentActionSubroutine() {
+            if(activeSelectedHotbarIndex === 1) { // Process Cell Battery Consumption Metrics
+                const batteryContainerCellCountElement = document.getElementById('count-slot-1');
+                let countVal = parseInt(batteryContainerCellCountElement.innerText.replace('x', ''));
+                if(countVal > 0 && vitalPlayerBattery < 100) {
+                    countVal--;
+                    batteryContainerCellCountElement.innerText = `x${countVal}`;
+                    vitalPlayerBattery = Math.min(100, vitalPlayerBattery + 45.0);
+                    pushDiagnosticLogLine("SYS", "High-capacity standard cell battery core consumed. Headlamp capacitor recharged.", "sys");
                 }
-                scaleTime += 0.04;
-                camera.rotation.z += Math.sin(scaleTime * 65) * 0.4;
-                camera.fov = 75 + Math.sin(scaleTime * 30) * 35;
-                camera.updateProjectionMatrix();
-                renderer.render(scene, camera);
-                requestAnimationFrame(runScareAnimation);
-            }
-            runScareAnimation();
-        }
-
-        function markTerminalAsDecryptedLocal(terminalId) {
-            if(terminals[terminalId] && !terminals[terminalId].decrypted) {
-                terminals[terminalId].decrypted = true;
-                terminals[terminalId].mesh.material.color.setHex(0x00ff00);
-                terminals[terminalId].mesh.material.emissive.setHex(0x003300);
-                decryptedCount++;
-                document.getElementById('objective').innerText = `OBJECTIVE: DECRYPT CORES [${decryptedCount}/${totalTerminals}]`;
-                pushFeedLog("NET_SYS", `Core element data matrix link extracted (${decryptedCount}/${totalTerminals}).`);
-
-                if(decryptedCount >= totalTerminals) {
-                    document.getElementById('objective').innerText = `ACCESS GRANTED. ESCAPE ROUTE OPEN.`;
-                    document.getElementById('objective').style.color = "#00ffaa";
+            } else if(activeSelectedHotbarIndex === 2) { // Process Adrenaline Injection Subroutines
+                const adrenalineInjectorsCountElement = document.getElementById('count-slot-2');
+                let injectVal = parseInt(adrenalineInjectorsCountElement.innerText.replace('x', ''));
+                if(injectVal > 0) {
+                    injectVal--;
+                    adrenalineInjectorsCountElement.innerText = `x${injectVal}`;
+                    adrenalineInjectedBoostTimer = 8.5; // Deliver 8.5 continuous frames of absolute sprinting speed parameters
+                    matchConsumedInjectorsCount++;
+                    pushDiagnosticLogLine("ALARM", "Adrenaline injector fluid deployed. Neural muscular metrics pushed past absolute structural limits.", "warn");
                 }
             }
         }
 
-        function animateLoop() {
-            if(!gameActive) return;
-            requestAnimationFrame(animateLoop);
+        function triggerContextualHackingMatrixPuzzle(targetTerminalCoreNodeId) {
+            hackingMinigameStateEngine.active = true;
+            hackingMinigameStateEngine.linkedCoreId = targetTerminalCoreNodeId;
+            hackingMinigameStateEngine.contextInputIndex = 0;
+            hackingMinigameStateEngine.objectiveSequence = [];
 
-            const dt = Math.min(clock.getDelta(), 0.033);
-            const ticks = clock.getElapsedTime();
+            // Compile 8 abstract computational memory registers values
+            for(let sequenceStepIndex = 0; sequenceStepIndex < 8; sequenceStepIndex++) {
+                hackingMinigameStateEngine.objectiveSequence.push(Math.floor(Math.random() * 9) + 1);
+            }
 
-            let distToThing = player.pos.distanceTo(thingAI.pos);
-            let distToProwler = player.pos.distanceTo(prowlerAI.pos);
+            const matrixGridDOMContainer = document.getElementById('hack-matrix-node-container');
+            matrixGridDOMContainer.innerHTML = "";
 
-            if(distToThing <= KILLBOX_RADIUS) { executeAbsoluteKillboxScare("THE THING"); return; }
-            if(distToProwler <= KILLBOX_RADIUS) { executeAbsoluteKillboxScare("THE PROWLER"); return; }
+            hackingMinigameStateEngine.objectiveSequence.forEach((targetNumericRegisterValue, indexPosition) => {
+                const DOMNodeButton = document.createElement('div');
+                DOMNodeButton.className = "hack-node";
+                DOMNodeButton.innerText = Math.floor(Math.random() * 9) + 1;
+                DOMNodeButton.onclick = () => processHackingSequenceInputTap(indexPosition, targetNumericRegisterValue, DOMNodeButton);
+                matrixGridDOMContainer.appendChild(DOMNodeButton);
+            });
 
-            blinkMeter -= dt * 11;
-            if(blinkMeter <= 0) {
-                isBlinking = true;
-                document.getElementById('blink-overlay').style.opacity = "1.0";
-                thingAI.pos.add(thingAI.heading.clone().multiplyScalar(thingAI.speed * 2.5));
-                prowlerAI.pos.add(prowlerAI.heading.clone().multiplyScalar(prowlerAI.speed * 2.5));
+            document.getElementById('hacking-terminal-modal').style.display = 'block';
+            document.exitPointerLock();
+        }
 
+        function processHackingSequenceInputTap(nodeIndex, targetCorrectValue, domObjectRef) {
+            if(!hackingMinigameStateEngine.active) return;
+
+            domObjectRef.innerText = targetCorrectValue;
+            if(nodeIndex === hackingMinigameStateEngine.contextInputIndex) {
+                domObjectRef.classList.add('matched');
+                hackingMinigameStateEngine.contextInputIndex++;
+                
+                if(hackingMinigameStateEngine.contextInputIndex >= hackingMinigameStateEngine.objectiveSequence.length) {
+                    // Firewall bypassed successfully
+                    document.getElementById('hack-status-message').innerText = "DATA ACCESS LINK CONFIRMED // CLOSING CORE PORT...";
+                    setTimeout(() => {
+                        executeLocalCoreDecryptionMarking(hackingMinigameStateEngine.linkedCoreId);
+                        if(!isLocalSandboxExecutionMode && socket && socket.connected) {
+                            socket.emit('replicate_core_decryption_event', { selectedRoomEncryptionCode, coreId: hackingMinigameStateEngine.linkedCoreId });
+                        }
+                        terminateHackingMatrixInterfaceLoop();
+                    }, 600);
+                }
+            } else {
+                domObjectRef.classList.add('failed');
+                document.getElementById('hack-status-message').innerText = "CRITICAL SIGNALS CRASH!! RESETTING SEGMENT LINK ARCHITECTURE...";
+                vitalPlayerSanity = Math.max(0, vitalPlayerSanity - 12.0); // Penalty mental sanity drain on structural buffer overflow failure
                 setTimeout(() => {
-                    document.getElementById('blink-overlay').style.opacity = "0";
-                    isBlinking = false;
-                    blinkMeter = 100 + Math.random() * 45;
-                }, 250);
+                    triggerContextualHackingMatrixPuzzle(hackingMinigameStateEngine.linkedCoreId);
+                }, 750);
             }
-            document.getElementById('blink-bar').style.width = `${Math.max(0, blinkMeter)}%`;
+        }
 
-            let closestMonsterDist = Math.min(distToThing, distToProwler);
-            if(closestMonsterDist < 26.0) {
-                let distortionFactor = (26.0 - closestMonsterDist) / 26.0;
-                if(Math.random() < distortionFactor * 0.95) {
-                    localFlashlight.intensity = 0;
+        function terminateHackingMatrixInterfaceLoop() {
+            hackingMinigameStateEngine.active = false;
+            document.getElementById('hacking-terminal-modal').style.display = 'none';
+            document.body.requestPointerLock();
+        }
+
+        function executeLocalCoreDecryptionMarking(targetTerminalCoreNodeId) {
+            const targetCoreRecordRef = dataCoresRegistry[targetTerminalCoreNodeId];
+            if(targetCoreRecordRef && !targetCoreRecordRef.isFullyDecrypted) {
+                targetCoreRecordRef.isFullyDecrypted = true;
+                targetCoreRecordRef.primaryMesh.material.color.setHex(0x00ff66);
+                targetCoreRecordRef.primaryMesh.material.emissive.setHex(0x002205);
+                scene.remove(targetCoreRecordRef.coreBulbMesh); // Strip signal bulb overhead mesh from Three scene pipeline
+
+                absoluteCoresFoundCount++;
+                document.getElementById('hud-primary-objective-text').innerText = `OBJECTIVE: EXTRACT DECRYPT DATA CORES [${absoluteCoresFoundCount}/${absoluteCoresTotalCount}]`;
+                pushDiagnosticLogLine("NET_SYS", `Core sector segment archive array linked successfully (${absoluteCoresFoundCount}/${absoluteCoresTotalCount}).`, "sys");
+
+                if(absoluteCoresFoundCount >= absoluteCoresTotalCount) {
+                    document.getElementById('hud-primary-objective-text').innerText = "ALL FILES EXTRACTED. EXTRACTION GATE OVERRIDES OPEN.";
+                    document.getElementById('hud-primary-objective-text').style.color = "#ffffff";
+                    pushDiagnosticLogLine("ALARM", "GRID ARCHITECTURE UNLOCKED. PROCEDE TO PRIMARY TERMINATION COORD LINES NOW.", "warn");
+                }
+            }
+        }
+
+        // =========================================================================
+        // SECTION 6: CORE SIMULATION ENGINE PROCESSING LOOP
+        // =========================================================================
+        
+        function executeMasterGameEngineLoopFrame() {
+            if(!isSystemLoopActive) return;
+            requestAnimationFrame(executeMasterGameEngineLoopFrame);
+
+            const loopDeltaTimeSeconds = Math.min(performanceClock.getDelta(), 0.033);
+            const totalElapsedClockTicks = performanceClock.getElapsedTime();
+
+            // Realtime Threat Proximity Assessment Loops
+            const distanceToStalkerAnomalyUnit = playerPhysicsBody.pos.distanceTo(stalkerAILogicEngine.pos);
+            const distanceToScreamerAnomalyUnit = playerPhysicsBody.pos.distanceTo(screamerAILogicEngine.pos);
+            const minimalThreatDistanceMetric = Math.min(distanceToStalkerAnomalyUnit, distanceToScreamerAnomalyUnit);
+
+            // Anomaly Collision Box Kill Engine Check Routines
+            if(distanceToStalkerAnomalyUnit <= ANOMALY_KILLBOX_THRESHOLD_LIMIT) { executeAbsoluteCrashSystemSequence("THE MAZE STALKER"); return; }
+            if(distanceToScreamerAnomalyUnit <= ANOMALY_KILLBOX_THRESHOLD_LIMIT) { executeAbsoluteCrashSystemSequence("THE LOW CORRIDOR SCREAMER"); return; }
+
+            // Dynamic Metric Tracker Multiplier logic updates
+            if(minimalThreatDistanceMetric < 35.0) {
+                const structuralExposureFactor = (35.0 - minimalThreatDistanceMetric) / 35.0;
+                if(structuralExposureFactor > maxProximityInterferenceStressFactor) {
+                    maxProximityInterferenceStressFactor = structuralExposureFactor;
+                }
+            }
+
+            // Processing Eye Optic Blinking Closure Simulation Sequence Mechanics
+            if(!isBlinkOpticClosureTriggered) {
+                vitalPlayerOpticBlink -= loopDeltaTimeSeconds * (activeSelectedClassProfileName === "hazmat" ? 7.2 : 9.5);
+                if(vitalPlayerOpticBlink <= 0.0) {
+                    isBlinkOpticClosureTriggered = true;
+                    document.getElementById('eye-blink-shutter-top').classList.add('blink-closed-top');
+                    document.getElementById('eye-blink-shutter-bottom').classList.add('blink-closed-bottom');
+
+                    // Advanced Horror Warp Jump Trajectories Mechanics: Threats shift locations instantly during eye closure frames
+                    stalkerAILogicEngine.pos.add(stalkerAILogicEngine.trajectory.clone().multiplyScalar(stalkerAILogicEngine.movementVelocity * 3.2));
+                    screamerAILogicEngine.pos.add(screamerAILogicEngine.trajectory.clone().multiplyScalar(screamerAILogicEngine.movementVelocity * 3.5));
+
+                    setTimeout(() => {
+                        document.getElementById('eye-blink-shutter-top').classList.remove('blink-closed-top');
+                        document.getElementById('eye-blink-shutter-bottom').classList.remove('blink-closed-bottom');
+                        isBlinkOpticClosureTriggered = false;
+                        vitalPlayerOpticBlink = 100.0 + Math.random() * 35.0;
+                    }, 280);
+                }
+            }
+            document.getElementById('fill-blink').style.width = `${Math.max(0, vitalPlayerOpticBlink)}%`;
+
+            // Headlamp Battery Drain Optimization Mapping Updates
+            if(vitalPlayerBattery > 0.0 && !hackingMinigameStateEngine.active) {
+                vitalPlayerBattery -= loopDeltaTimeSeconds * (activeSelectedClassProfileName === "guard" ? 0.95 : 1.4);
+                if(vitalPlayerBattery <= 0.0) {
+                    vitalPlayerBattery = 0.0;
+                    pushDiagnosticLogLine("ALARM", "Flashlight accumulator fully depleted. Operating in total dark structural envelope lines.", "crit");
+                }
+            }
+            document.getElementById('fill-battery').style.width = `${vitalPlayerBattery}%`;
+
+            // Proximity Induced Electromagnetic Flashlight Flicker Simulation Patterns
+            if(minimalThreatDistanceMetric < 24.0 && vitalPlayerBattery > 0.0) {
+                const structuralFlickerLimitRatio = (24.0 - minimalThreatDistanceMetric) / 24.0;
+                if(Math.random() < (structuralFlickerLimitRatio * 0.92)) {
+                    networkEngineFlashlightObject.intensity = 0.0;
+                    document.getElementById('glitch-overlay').classList.add('glitch-active');
                 } else {
-                    localFlashlight.intensity = flashlightBaseIntensity * (1.0 - distortionFactor * 0.7);
+                    networkEngineFlashlightObject.intensity = structuralMaxIntensitySetting * (1.0 - structuralFlickerLimitRatio * 0.65);
+                    document.getElementById('glitch-overlay').classList.remove('glitch-active');
                 }
             } else {
-                localFlashlight.intensity = flashlightBaseIntensity;
+                networkEngineFlashlightObject.intensity = vitalPlayerBattery > 0.0 ? structuralMaxIntensitySetting : 0.0;
+                document.getElementById('glitch-overlay').classList.remove('glitch-active');
             }
 
-            if(closestMonsterDist < 28.0 || localFlashlight.intensity === 0) {
-                sanity = Math.max(0, sanity - dt * 5.5);
+            // Calculation and processing loops for dynamic mental stability matrices
+            if(minimalThreatDistanceMetric < 26.0 || networkEngineFlashlightObject.intensity === 0.0) {
+                vitalPlayerSanity = Math.max(0, vitalPlayerSanity - loopDeltaTimeSeconds * 4.8);
             } else {
-                sanity = Math.min(100, sanity + dt * 0.8);
+                vitalPlayerSanity = Math.min(100, vitalPlayerSanity + loopDeltaTimeSeconds * 0.6);
             }
-            document.getElementById('sanity-bar').style.width = `${sanity}%`;
+            document.getElementById('fill-sanity').style.width = `${vitalPlayerSanity}%`;
 
-            let sanityRatio = (100 - sanity) / 100;
-            if(sanityRatio > 0.15) {
-                camera.fov = 75 + Math.sin(ticks * 5.0) * (25.0 * sanityRatio);
+            const currentSanityDeficitRatio = (100.0 - vitalPlayerSanity) / 100.0;
+            if(currentSanityDeficitRatio > 0.22) {
+                camera.fov = 75.0 + Math.sin(totalElapsedClockTicks * 6.0) * (30.0 * currentSanityDeficitRatio);
                 camera.updateProjectionMatrix();
-                camPitch += (Math.random() - 0.5) * 0.012 * sanityRatio;
-                camYaw += (Math.random() - 0.5) * 0.012 * sanityRatio;
-
-                if(Math.random() < 0.02) {
-                    let cloneOffset = new THREE.Vector3(0, 0, -10 - Math.random() * 10).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw);
-                    shadowCloneEntity.position.copy(player.pos).add(cloneOffset);
-                    shadowCloneEntity.position.y = 2.5;
-                    shadowCloneEntity.material.opacity = 0.4 * sanityRatio;
+                
+                // Induce hallucination coordinate clone tracking loops
+                if(Math.random() < 0.015) {
+                    const localizedHallucinationOffset = new THREE.Vector3(0, 0, -12.0 - Math.random() * 15.0).applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYawRotation);
+                    dynamicPhantomHallucinationEntity.position.copy(playerPhysicsBody.pos).add(localizedHallucinationOffset);
+                    dynamicPhantomHallucinationEntity.position.y = 3.0;
                 }
+            }
+
+            // Advanced Audio Drone Processing Synthesizer Intervals Controls
+            if(minimalThreatDistanceMetric < 32.0) {
+                audioHeartbeatVariableInterval = Math.max(0.15, minimalThreatDistanceMetric / 32.0);
             } else {
-                shadowCloneEntity.material.opacity = 0.0;
+                audioHeartbeatVariableInterval = 1.2;
             }
 
-            if(closestMonsterDist < 35.0) {
-                heartbeatInterval = Math.max(0.18, (closestMonsterDist / 35.0));
+            if(totalElapsedClockTicks - historicalHeartbeatExecutionTimestamp > audioHeartbeatVariableInterval) {
+                triggerProceduralAudioHeartbeatPulse();
+                historicalHeartbeatExecutionTimestamp = totalElapsedClockTicks;
+            }
+
+            if(totalElapsedClockTicks - historicalWhisperExecutionTimestamp > audioWhisperVariableInterval) {
+                triggerSpatialWhisperRadioStaticCrack();
+                historicalWhisperExecutionTimestamp = totalElapsedClockTicks;
+                audioWhisperVariableInterval = 5.0 + Math.random() * 7.5;
+            }
+
+            // Kinetic Velocity Calculation Matrices
+            let localCalculatedMovementSpeedScalar = playerPhysicsBody.baseSpeed;
+            if(structuralInputMap.shift && !isStaminaCurveExhausted && (structuralInputMap.w || structuralInputMap.s)) {
+                localCalculatedMovementSpeedScalar *= playerPhysicsBody.sprintMultiplier;
+            }
+            if(adrenalineInjectedBoostTimer > 0.0) {
+                adrenalineInjectedBoostTimer -= loopDeltaTimeSeconds;
+                localCalculatedMovementSpeedScalar *= 1.85; // Deliver heavy kinetic pacing shift under chemical enhancement loops
+                isStaminaCurveExhausted = false;
+            }
+            if(isCrouchMovementActive) localCalculatedMovementSpeedScalar *= 0.42;
+
+            // Stamina depletion curve evaluation algorithms
+            const structuralDepletionFactor = activeSelectedClassProfileName === "hazmat" ? 12.0 : 25.0;
+            if(structuralInputMap.shift && !isStaminaCurveExhausted && (structuralInputMap.w || structuralInputMap.s || structuralInputMap.a || structuralInputMap.d)) {
+                vitalPlayerStamina = Math.max(0, vitalPlayerStamina - loopDeltaTimeSeconds * structuralDepletionFactor);
+                if(vitalPlayerStamina <= 0.0) isStaminaCurveExhausted = true;
             } else {
-                heartbeatInterval = 1.3;
+                vitalPlayerStamina = Math.min(100, vitalPlayerStamina + loopDeltaTimeSeconds * 16.0);
+                if(vitalPlayerStamina > 22.0) isStaminaCurveExhausted = false;
             }
-            if(ticks - lastHeartbeatTime > heartbeatInterval) {
-                triggerHeartbeatPulse();
-                lastHeartbeatTime = ticks;
-            }
+            document.getElementById('fill-stamina').style.width = `${vitalPlayerStamina}%`;
 
-            if(ticks - lastWhisperTime > nextWhisperDelay) {
-                triggerSpatialWhisper();
-                lastWhisperTime = ticks;
-                nextWhisperDelay = 4.0 + Math.random() * 8.0;
-            }
+            // Transform matrix computations from camera Euler yaw mappings
+            const directionalForwardVector = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYawRotation).normalize();
+            const directionalLateralRightVector = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYawRotation).normalize();
+            
+            const compiledKineticMoveVector = new THREE.Vector3(0, 0, 0);
+            if(structuralInputMap.w) compiledKineticMoveVector.add(directionalForwardVector);
+            if(structuralInputMap.s) compiledKineticMoveVector.sub(directionalForwardVector);
+            if(structuralInputMap.d) compiledKineticMoveVector.add(directionalLateralRightVector);
+            if(structuralInputMap.a) compiledKineticMoveVector.sub(directionalLateralRightVector);
+            if(compiledKineticMoveVector.lengthSq() > 0) compiledKineticMoveVector.normalize();
 
-            let currentMovementSpeed = keys.shift && !staminaExhausted ? player.sprintSpeed : player.speed;
-            if(keys.ctrl) currentMovementSpeed *= 0.45;
+            const frameTargetVelocityDisplacement = compiledKineticMoveVector.multiplyScalar(localCalculatedMovementSpeedScalar * loopDeltaTimeSeconds);
+            playerPhysicsBody.pos.copy(calculateSlidingPhysicsMovementVector(playerPhysicsBody.pos, frameTargetVelocityDisplacement, playerPhysicsBody.radius, null));
 
-            let depletionRate = selectedClass === "hazmat" ? 11 : 22;
-            if(keys.shift && (keys.w || keys.s || keys.a || keys.d)) {
-                stamina = Math.max(0, stamina - dt * depletionRate);
-                if(stamina <= 0) staminaExhausted = true;
-            } else {
-                stamina = Math.min(100, stamina + dt * 14);
-                if(stamina > 20) staminaExhausted = false;
-            }
-            document.getElementById('stamina-bar').style.width = `${stamina}%`;
-
-            let moveVector = new THREE.Vector3();
-            let forwardV = new THREE.Vector3(0,0,-1).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw).normalize();
-            let rightV = new THREE.Vector3(1,0,0).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw).normalize();
-
-            if(keys.w) moveVector.add(forwardV);
-            if(keys.s) moveVector.sub(forwardV);
-            if(keys.d) moveVector.add(rightV);
-            if(keys.a) moveVector.sub(rightV);
-            if(moveVector.lengthSq() > 0) moveVector.normalize();
-
-            let targetMoveDelta = moveVector.multiplyScalar(currentMovementSpeed * dt);
-            player.pos.copy(executeAIPositionSliding(player.pos, targetMoveDelta, player.radius, null));
-
-            let bobAmount = keys.ctrl ? 0.05 : (keys.shift ? 0.28 : 0.14);
-            let bobFreq = keys.shift ? 14 : 8;
-            let currentBob = Math.sin(ticks * bobFreq) * bobAmount;
-            if(!keys.w && !keys.s && !keys.a && !keys.d) currentBob = 0;
-
-            let eyeHeight = keys.ctrl ? 1.8 : 3.6;
-            camera.position.set(player.pos.x, eyeHeight + currentBob, player.pos.z);
-
-            let lookTarget = new THREE.Vector3(0,0,-1);
-            lookTarget.applyAxisAngle(new THREE.Vector3(1,0,0), camPitch);
-            lookTarget.applyAxisAngle(new THREE.Vector3(0,1,0), camYaw);
-            camera.lookAt(camera.position.clone().add(lookTarget));
-
-            if(!isLocalMode && socket && socket.connected) {
-                socket.emit('player_update', { roomCode, position: player.pos, yaw: camYaw, isCrouching: keys.ctrl });
+            // Volumetric Camera Bob Head Movements Modulators
+            let cameraBobDisplacementValue = 0;
+            if(structuralInputMap.w || structuralInputMap.s || structuralInputMap.a || structuralInputMap.d) {
+                const bobFrequencyScalar = structuralInputMap.shift ? 15.0 : 8.5;
+                const bobAmplitudeScalar = isCrouchMovementActive ? 0.06 : (structuralInputMap.shift ? 0.32 : 0.16);
+                cameraBobDisplacementValue = Math.sin(totalElapsedClockTicks * bobFrequencyScalar) * bobAmplitudeScalar;
             }
 
-            let nearAnyTerminal = false;
-            currentTargetTerminalId = null;
+            playerPhysicsBody.currentHeight = isCrouchMovementActive ? 1.75 : 3.5;
+            camera.position.set(playerPhysicsBody.pos.x, playerPhysicsBody.currentHeight + cameraBobDisplacementValue, playerPhysicsBody.pos.z);
 
-            Object.keys(terminals).forEach(id => {
-                let term = terminals[id];
-                if(!term.decrypted) {
-                    let d = player.pos.distanceTo(term.pos);
-                    if(d < 6.5) { nearAnyTerminal = true; currentTargetTerminalId = id; }
+            // Compute spatial look transforms onto camera target orientation vectors
+            const lookTargetOrientationVector = new THREE.Vector3(0, 0, -1);
+            lookTargetOrientationVector.applyAxisAngle(new THREE.Vector3(1, 0, 0), cameraPitchRotation);
+            lookTargetOrientationVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYawRotation);
+            camera.lookAt(camera.position.clone().add(lookTargetOrientationVector));
+
+            // Dynamic Interaction Bounding Box Detection Loops
+            let isProximityTargetFound = false;
+            currentActiveInterfacedObjectRef = null;
+
+            Object.keys(dataCoresRegistry).forEach(coreKeyId => {
+                const coreRecordRef = dataCoresRegistry[coreKeyId];
+                if(coreRecordRef && !coreRecordRef.isFullyDecrypted) {
+                    const distanceToTerminalCoreNode = playerPhysicsBody.pos.distanceTo(coreRecordRef.positionVector);
+                    if(distanceToTerminalCoreNode < 7.2) {
+                        isProximityTargetFound = true;
+                        currentActiveInterfacedObjectRef = { type: "CORE_TERMINAL", id: coreKeyId };
+                    }
                 }
             });
 
-            if(nearAnyTerminal && currentTargetTerminalId) {
-                document.getElementById('interaction-prompt').style.display = 'block';
-                document.getElementById('decrypt-progress-container').style.display = 'block';
-                
-                if(keys.e) {
-                    let speedModifier = selectedClass === "engineer" ? 45 : 30;
-                    decryptProgress += dt * speedModifier;
-                    if(decryptProgress >= 100) {
-                        if (!isLocalMode && socket && socket.connected) {
-                            socket.emit('terminal_decrypted', { roomCode, terminalId: currentTargetTerminalId });
-                        }
-                        markTerminalAsDecryptedLocal(currentTargetTerminalId);
-                        decryptProgress = 0;
-                    }
-                } else {
-                    decryptProgress = Math.max(0, decryptProgress - dt * 50);
+            // Structural Security Keycard Door Proximity Interaction Intercept Loops
+            structuralSecurityDoorsRegistry.forEach(doorRecord => {
+                const distanceToSecurityDoorPneumator = playerPhysicsBody.pos.distanceTo(doorRecord.positionVector);
+                if(distanceToSecurityDoorPneumator < 8.5 && !doorRecord.isDoorOpen) {
+                    isProximityTargetFound = true;
+                    currentActiveInterfacedObjectRef = { type: "SECURITY_DOOR", referenceObject: doorRecord };
                 }
-                document.getElementById('decrypt-progress-bar').style.width = `${decryptProgress}%`;
+            });
+
+            // Dynamic Item Pickups Intercept Bounds Loops
+            itemsPickupMapMatrix.forEach(itemRecord => {
+                if(!itemRecord.isCollectedByClient) {
+                    const distanceToItemMeshGroundCoord = playerPhysicsBody.pos.distanceTo(itemRecord.currentPositionVector);
+                    if(distanceToItemMeshGroundCoord < 5.0) {
+                        isProximityTargetFound = true;
+                        currentActiveInterfacedObjectRef = { type: "ITEM_PICKUP", referenceObject: itemRecord };
+                    }
+                }
+            });
+
+            const promptAlertDOMElement = document.getElementById('interaction-alert-system');
+            if(isProximityTargetFound && currentActiveInterfacedObjectRef && !hackingMinigameStateEngine.active) {
+                promptAlertDOMElement.style.display = 'block';
+                if(currentActiveInterfacedObjectRef.type === "CORE_TERMINAL") {
+                    promptAlertDOMElement.innerText = "COGNITIVE ARCHIVE TERMINAL LOCATED // INTERACT: [KEY E] TO DECRYPT";
+                    if(structuralInputMap.e) triggerContextualHackingMatrixPuzzle(currentActiveInterfacedObjectRef.id);
+                } else if(currentActiveInterfacedObjectRef.type === "SECURITY_DOOR") {
+                    promptAlertDOMElement.innerText = `LOCKED AREA SECURITY BULWARK // REQUIRES: [${currentActiveInterfacedObjectRef.referenceObject.codeAccessKeyRequirement}] INTERACT: [KEY E]`;
+                    if(structuralInputMap.e) {
+                        const targetKeyCountVal = parseInt(document.getElementById('count-slot-3').innerText.replace('x', ''));
+                        if(targetKeyCountVal > 0) {
+                            document.getElementById('count-slot-3').innerText = `x${targetKeyCountVal - 1}`;
+                            currentActiveInterfacedObjectRef.referenceObject.isDoorOpen = true;
+                            scene.remove(currentActiveInterfacedObjectRef.referenceObject.structuralGroup); // Pull lock door mesh from Three array pipeline
+                            pushDiagnosticLogLine("SYS", "Pneumatic corridor locks bypassed via security credential authorization.", "sys");
+                        } else {
+                            pushDiagnosticLogLine("ALARM", "ACCESS EXCHANGES REJECTED! COMPROMISED KEYCARD FOOTPRINT.", "crit");
+                        }
+                    }
+                } else if(currentActiveInterfacedObjectRef.type === "ITEM_PICKUP") {
+                    promptAlertDOMElement.innerText = `FOUND GROUND CARRIER ASSET CONTAINER PACK: [${currentActiveInterfacedObjectRef.referenceObject.itemTypeString}] // INTERACT: [KEY E]`;
+                    if(structuralInputMap.e) {
+                        executeInventoryItemIngestRoutine(currentActiveInterfacedObjectRef.referenceObject);
+                    }
+                }
             } else {
-                document.getElementById('interaction-prompt').style.display = 'none';
-                decryptProgress = 0;
+                promptAlertDOMElement.style.display = 'none';
             }
 
-            let tStep = thingAI.heading.clone().multiplyScalar(thingAI.speed * dt);
-            thingAI.pos.copy(executeAIPositionSliding(thingAI.pos, tStep, 1.8, thingAI.heading));
-            thingEntity.position.copy(thingAI.pos);
-            thingEntity.lookAt(thingAI.pos.clone().add(thingAI.heading));
+            // Anomaly Threat Neural Engine Tracking Matrix Calculations Updates
+            const currentStepDisplacementStalker = stalkerAILogicEngine.trajectory.clone().multiplyScalar(stalkerAILogicEngine.movementVelocity * loopDeltaTimeSeconds);
+            stalkerAILogicEngine.pos.copy(calculateSlidingPhysicsMovementVector(stalkerAILogicEngine.pos, currentStepDisplacementStalker, 2.0, stalkerAILogicEngine.trajectory));
+            spatialThreatStalkerEntity.position.copy(stalkerAILogicEngine.pos);
+            spatialThreatStalkerEntity.lookAt(stalkerAILogicEngine.pos.clone().add(stalkerAILogicEngine.trajectory));
 
-            let pStep = prowlerAI.heading.clone().multiplyScalar(prowlerAI.speed * dt);
-            prowlerAI.pos.copy(executeAIPositionSliding(prowlerAI.pos, pStep, 1.8, prowlerAI.heading));
-            prowlerEntity.position.copy(prowlerAI.pos);
-            prowlerEntity.lookAt(prowlerAI.pos.clone().add(prowlerAI.heading));
+            const currentStepDisplacementScreamer = screamerAILogicEngine.trajectory.clone().multiplyScalar(screamerAILogicEngine.movementVelocity * loopDeltaTimeSeconds);
+            screamerAILogicEngine.pos.copy(calculateSlidingPhysicsMovementVector(screamerAILogicEngine.pos, currentStepDisplacementScreamer, 2.0, screamerAILogicEngine.trajectory));
+            spatialThreatScreamerEntity.position.copy(screamerAILogicEngine.pos);
+            spatialThreatScreamerEntity.lookAt(screamerAILogicEngine.pos.clone().add(screamerAILogicEngine.trajectory));
 
-            const tracker = document.getElementById('motion-tracker');
-            if(closestMonsterDist < 20.0) {
-                tracker.innerText = `OS_OVERLAP WARNING // PROXIMITY ALERT: ${closestMonsterDist.toFixed(1)}M`;
-                tracker.className = "tracker-crit";
+            // Simulated Companion Telemetry Path Loop Calculations Updates
+            if(isLocalSandboxExecutionMode) {
+                simulatedSandboxCompanionBots.forEach(bot => {
+                    const vectorTargetDirection = bot.internalNavigationTarget.clone().sub(bot.positionTrackingVector).normalize();
+                    const frameStep = vectorTargetDirection.multiplyScalar(bot.routingVelocityScalar * loopDeltaTimeSeconds);
+                    bot.positionTrackingVector.copy(calculateSlidingPhysicsMovementVector(bot.positionTrackingVector, frameStep, 1.4, null));
+                    bot.visualMeshReference.position.copy(bot.positionTrackingVector);
+
+                    if(bot.positionTrackingVector.distanceTo(bot.internalNavigationTarget) < 4.0) {
+                        bot.internalNavigationTarget.set(30.0 + Math.random() * 200.0, 3.0, 30.0 + Math.random() * 120.0);
+                    }
+                });
+            }
+
+            // Volumetric green floor fog current particle system frame translations rotation updates
+            dynamicVolumetricFogParticleNodes.forEach(fogUnit => {
+                fogUnit.phaseAngleOffset += loopDeltaTimeSeconds * fogUnit.driftVelocityScalar;
+                fogUnit.meshReference.position.y = 0.5 + Math.sin(fogUnit.phaseAngleOffset) * 0.45;
+                fogUnit.meshReference.rotation.z += loopDeltaTimeSeconds * 0.08;
+            });
+
+            // Master HUD Radar String Panel Outputs
+            const radarTrackerOutputDOMElement = document.getElementById('hud-motion-tracker-readout');
+            if(minimalThreatDistanceMetric < 20.0) {
+                radarTrackerOutputDOMElement.innerText = `SYS_OVERLAP CRITICAL ALERT // PROXIMITY DISPLACEMENT SIGNALS CLOSE: ${minimalThreatDistanceMetric.toFixed(1)}M`;
+                radarTrackerOutputDOMElement.className = "log-crit";
             } else {
-                tracker.innerText = `DECRYPTING ARCHIVE STREAM // DISTANCE SIGNALS CLEAR: ${closestMonsterDist.toFixed(0)}`;
-                tracker.className = "";
+                radarTrackerOutputDOMElement.innerText = `HARDWARE OK // VOLUMETRIC GRID SIGNAL LOSS NOMINAL. NO INTERRUPT INDEX: ${minimalThreatDistanceMetric.toFixed(0)}`;
+                radarTrackerOutputDOMElement.className = "";
+            }
+
+            // Transmit player transformation matrix updates over connected distributed sockets
+            if(!isLocalSandboxExecutionMode && socket && socket.connected) {
+                socket.emit('broadcast_player_matrix_transform_tick', { selectedRoomEncryptionCode, pos: playerPhysicsBody.pos, yaw: cameraYawRotation });
             }
 
             renderer.render(scene, camera);
+        }
+
+        function executeInventoryItemIngestRoutine(targetItemRecordRef) {
+            targetItemRecordRef.isCollectedByClient = true;
+            scene.remove(targetItemRecordRef.visualMeshObjectRef); // Strip pickup box from live scene mesh tracking array pipelines
+
+            if(targetItemRecordRef.itemTypeString === "CELL_BATTERY") {
+                const hotbarCountDOMElement = document.getElementById('count-slot-1');
+                const numericCount = parseInt(hotbarCountDOMElement.innerText.replace('x', '')) + 1;
+                hotbarCountDOMElement.innerText = `x${numericCount}`;
+                pushDiagnosticLogLine("SYS", "Acquired auxiliary cylinder standard cell cell pack core asset.", "sys");
+            } else if(targetItemRecordRef.itemTypeString === "ADRENALINE_INJECTOR") {
+                const hotbarCountDOMElement = document.getElementById('count-slot-2');
+                const numericCount = parseInt(hotbarCountDOMElement.innerText.replace('x', '')) + 1;
+                hotbarCountDOMElement.innerText = `x${numericCount}`;
+                pushDiagnosticLogLine("SYS", "Acquired epinephrine synthetic chemical compound syringe module cell container.", "sys");
+            } else if(targetItemRecordRef.itemTypeString === "SECURITY_RED_CARD") {
+                const hotbarCountDOMElement = document.getElementById('count-slot-3');
+                hotbarCountDOMElement.innerText = "x1";
+                matchCollectedKeycardsCount++;
+                pushDiagnosticLogLine("ALARM", "CRITICAL OVERRIDE MODULE SECURITY CREDENTIAL ENCRYPTION PASS DETECTED.", "warn");
+            }
+        }
+
+        function pushDiagnosticLogLine(channelSenderHeader, loggedMessageString, statusClassificationCode) {
+            const loggingPanelDOMContainer = document.getElementById('network-diagnostic-log');
+            const newLogLineWrapperDOMElement = document.createElement('div');
+            newLogLineWrapperDOMElement.className = "log-line";
+
+            let targetOutputHexColorString = "#00ffaa";
+            if(statusClassificationCode === "warn") targetOutputHexColorString = "#ffaa00";
+            if(statusClassificationCode === "crit") targetOutputHexColorString = "#ff3333";
+
+            newLogLineWrapperDOMElement.innerHTML = `<span style="color: ${targetOutputHexColorString}">[${channelSenderHeader}]</span>: ${loggedMessageString}`;
+            loggingPanelDOMContainer.prepend(newLogLineWrapperDOMElement);
+        }
+
+        function toggleConfigUtilityMenu(shouldOpenMenu) {
+            const configPanelDOMRef = document.getElementById('config-settings-panel');
+            if(shouldOpenMenu) {
+                configPanelDOMRef.style.display = 'block';
+                document.exitPointerLock();
+            } else {
+                configPanelDOMRef.style.display = 'none';
+                
+                // Parse and map parameters values from settings input DOM elements sliders
+                const parsedMouseLookSensitivityValue = parseInt(document.getElementById('cfg-mouse-sens').value);
+                mouseLookSensitivityMultiplier = 0.00044 * parsedMouseLookSensitivityValue;
+
+                const parsedRenderScaleRatioValue = parseInt(document.getElementById('cfg-render-scale').value);
+                renderingResolutionScaleRatio = parsedRenderScaleRatioValue / 10.0;
+                renderer.setSize(window.innerWidth * renderingResolutionScaleRatio, window.innerHeight * renderingResolutionScaleRatio, false);
+
+                const parsedVolumeGainValue = parseInt(document.getElementById('cfg-audio-gain').value);
+                if(engineMasterGainNode) {
+                    engineMasterGainNode.gain.setValueAtTime(parsedVolumeGainValue / 10.0, browserAudioContextInstance.currentTime);
+                }
+
+                document.body.requestPointerLock();
+            }
+        }
+
+        function executeViewportResolutionRecalculationHandler() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth * renderingResolutionScaleRatio, window.innerHeight * renderingResolutionScaleRatio, false);
+        }
+
+        function executeAbsoluteCrashSystemSequence(attackerIdentifierNameString) {
+            isSystemLoopActive = false;
+            clearInterval(clockIntervalTrackingInstance);
+
+            document.exitPointerLock();
+            document.getElementById('gameover-diagnostic-panel').style.display = 'flex';
+
+            // Print summary calculations variables out to runtime diagnostic readout matrices
+            const durationMinutesOutput = Math.floor(sessionElapsedRunSeconds / 60).toString().padStart(2, '0');
+            const durationSecondsOutput = (sessionElapsedRunSeconds % 60).toString().padStart(2, '0');
+            
+            document.getElementById('stat-runtime-val').innerText = `${durationMinutesOutput}:${durationSecondsOutput}`;
+            document.getElementById('stat-cores-val').innerText = `${absoluteCoresFoundCount} / ${absoluteCoresTotalCount}`;
+            document.getElementById('stat-keys-val').innerText = `${matchCollectedKeycardsCount}`;
+            document.getElementById('stat-inject-val').innerText = `${matchConsumedInjectorsCount}`;
+            document.getElementById('stat-proximity-val').innerText = `${(maxProximityInterferenceStressFactor * 100).toFixed(0)}%`;
         }
     </script>
 </body>
