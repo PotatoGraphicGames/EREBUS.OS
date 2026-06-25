@@ -253,7 +253,6 @@
         let totalTerminals = 0;
         let decryptedCount = 0;
         let currentTargetTerminalId = null;
-        let decryptProgress = 0;
 
         let selectedClass = "hazmat";
         let stamina = 100;
@@ -488,7 +487,8 @@
             document.getElementById('start-screen').style.display = 'none';
             buildProceduralAudioEngine();
             
-            scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x020503, 0.015);
+            // INCREASED SCARY HORROR ATMOSPHERE - Thickened the fog significantly
+            scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x010401, 0.045);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500); scene.add(camera);
             renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-viewport'), antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -497,8 +497,12 @@
             buildStaticMapGeometry();
             buildPlayerMeshInfrastructure(); 
             
-            localFlashlight = new THREE.SpotLight(0xccffdd, flashlightBaseIntensity, 140, Math.PI / 2.6, 0.5, 0.4);
-            scene.add(localFlashlight); scene.add(localFlashlight.target);
+            // FLASHLIGHT BUG FIX: Narrowed spot beam and attached it direct to camera system layout
+            localFlashlight = new THREE.SpotLight(0xccffdd, flashlightBaseIntensity, 130, Math.PI / 4.5, 0.6, 0.4);
+            camera.add(localFlashlight); 
+            localFlashlight.position.set(0, 0, 0);
+            localFlashlight.target.position.set(0, 0, -1);
+            camera.add(localFlashlight.target);
 
             if(selectedClass === "guard") { flashlightBaseIntensity = 100; localFlashlight.intensity = flashlightBaseIntensity; } 
             else if(selectedClass === "hazmat") { player.speed = 14.0; player.sprintSpeed = 21.5; }
@@ -519,7 +523,8 @@
                 accumulatedMouseX += mx; accumulatedMouseY += my;
             });
 
-            scene.add(new THREE.AmbientLight(0x001102, 0.6));
+            // SCARY BALANCING: Dropped ambient illumination near zero to force reliance on flashlight
+            scene.add(new THREE.AmbientLight(0x001102, 0.08));
             
             startSector();
         }
@@ -566,7 +571,15 @@
         }
 
         function buildStaticMapGeometry() {
-            const wallMat = new THREE.MeshBasicMaterial({ color: 0x00ff55, wireframe: true, transparent: true, opacity: 0.10 });
+            // VISUAL BUG FIX: Changed wireframes to See-Through Dark Green Glass at 60% opacity
+            const wallMat = new THREE.MeshStandardMaterial({ 
+                color: 0x001c04, 
+                transparent: true, 
+                opacity: 0.60, 
+                roughness: 0.2, 
+                metalness: 0.1,
+                side: THREE.DoubleSide
+            });
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x010301, roughness: 0.85 }); 
             const wallGeo = new THREE.BoxGeometry(CELL_SIZE, CELL_SIZE * 1.5, CELL_SIZE);
             for(let r=0; r<mapGrid.length; r++) {
@@ -595,7 +608,9 @@
                 let baseMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.9, 3.4, 6), new THREE.MeshStandardMaterial({ color: 0x11331a })); baseMesh.position.y = 1.7; group.add(baseMesh);
                 let coreMesh = new THREE.Mesh(new THREE.SphereGeometry(0.75, 8, 8), new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66 })); coreMesh.position.y = 4.0; group.add(coreMesh);
                 group.position.set(node.x, 0, node.z); scene.add(group);
-                terminals[termId] = { id: termId, pos: new THREE.Vector3(node.x, 2, node.z), group: group, mesh: baseMesh, crownMesh: coreMesh, decrypted: false };
+                
+                // DATA TERMINAL STATE BUG FIX: Progress variable is now split locally inside each individual terminal object
+                terminals[termId] = { id: termId, pos: new THREE.Vector3(node.x, 2, node.z), group: group, mesh: baseMesh, crownMesh: coreMesh, decrypted: false, progress: 0 };
             }
 
             const perimeterCorners = [ {r: 1, c: 1}, {r: 1, c: mapGrid[0].length - 2}, {r: mapGrid.length - 2, c: 1}, {r: mapGrid.length - 2, c: mapGrid[0].length - 2} ];
@@ -646,17 +661,22 @@
 
             for(let i=0; i<numStalkers; i++) {
                 let sGroup = new THREE.Group(); 
-                let stalkerTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.4, 6.0, 5), new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000 })); stalkerTorso.position.y = 4.0; sGroup.add(stalkerTorso);
-                let stalkerHead = new THREE.Mesh(new THREE.SphereGeometry(0.9, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff3333, emissive: 0x440000 })); stalkerHead.position.y = 7.5; sGroup.add(stalkerHead);
-                let limbL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 5.0, 0.3), new THREE.MeshStandardMaterial({ color: 0xcc1111 })); limbL.position.set(-1.2, 4.0, 0);
-                let limbR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 5.0, 0.3), new THREE.MeshStandardMaterial({ color: 0xcc1111 })); limbR.position.set(1.2, 4.0, 0);
+                let stalkerTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.4, 6.0, 5), new THREE.MeshStandardMaterial({ color: 0x660000, emissive: 0x110000 })); stalkerTorso.position.y = 4.0; sGroup.add(stalkerTorso);
+                let stalkerHead = new THREE.Mesh(new THREE.SphereGeometry(0.9, 8, 8), new THREE.MeshStandardMaterial({ color: 0x990000, emissive: 0x440000 })); stalkerHead.position.y = 7.5; sGroup.add(stalkerHead);
+                let limbL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 5.0, 0.3), new THREE.MeshStandardMaterial({ color: 0x550000 })); limbL.position.set(-1.2, 4.0, 0);
+                let limbR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 5.0, 0.3), new THREE.MeshStandardMaterial({ color: 0x550000 })); limbR.position.set(1.2, 4.0, 0);
                 sGroup.add(limbL, limbR); scene.add(sGroup);
 
                 let spawnVector = grabRandomFloorVectorFromMatrix(CELL_SIZE * 5);
+                
+                // AI WALL GLITCH FIX: Ensure entities never initialize stuck straight inside a wall cell
+                if (verifyStaticMapCollisions(spawnVector, 1.5)) {
+                    spawnVector = grabRandomFloorVectorFromMatrix(0);
+                }
 
                 aiEntities.push({
                     label: "STALKER", state: "PATROL", pos: spawnVector,
-                    heading: new THREE.Vector3(1,0,0), speed: 10.5 * speedMult, huntSpeed: 14.5 * speedMult, radius: 1.3, 
+                    heading: new THREE.Vector3(1,0,0), speed: 11.5 * speedMult, huntSpeed: 16.0 * speedMult, radius: 1.3, 
                     path: [], patrolTarget: grabRandomFloorVectorFromMatrix(), timeStuck: 0, animCycle: 0,
                     meshGroup: sGroup, modelRef: { leftArm: limbL, rightArm: limbR, torso: stalkerTorso, head: stalkerHead }, isMoving: false
                 });
@@ -664,20 +684,25 @@
 
             for(let i=0; i<numRavagers; i++) {
                 let rGroup = new THREE.Group(); 
-                let ravMat = new THREE.MeshStandardMaterial({ color: 0x0066ff, emissive: 0x002288 });
+                let ravMat = new THREE.MeshStandardMaterial({ color: 0x002266, emissive: 0x000b33 });
                 let ravagerBody = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.8, 5.0), ravMat); ravagerBody.position.y = 2.2; rGroup.add(ravagerBody);
-                let ravagerHead = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 2.0), new THREE.MeshStandardMaterial({ color: 0x2288ff })); ravagerHead.position.set(0, 2.6, 2.8); rGroup.add(ravagerHead);
-                let rLegFL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.2, 0.5), new THREE.MeshStandardMaterial({ color: 0x0044cc })); rLegFL.position.set(-1.4, 1.1, 2.0);
+                let ravagerHead = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 2.0), new THREE.MeshStandardMaterial({ color: 0x0044aa })); ravagerHead.position.set(0, 2.6, 2.8); rGroup.add(ravagerHead);
+                let rLegFL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.2, 0.5), new THREE.MeshStandardMaterial({ color: 0x002288 })); rLegFL.position.set(-1.4, 1.1, 2.0);
                 let rLegFR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.2, 0.5), rLegFL.material); rLegFR.position.set(1.4, 1.1, 2.0);
-                let rLegBL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.2, 0.5), new THREE.MeshStandardMaterial({ color: 0x0044cc })); rLegBL.position.set(-1.4, 1.1, -2.0);
+                let rLegBL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.2, 0.5), new THREE.MeshStandardMaterial({ color: 0x002288 })); rLegBL.position.set(-1.4, 1.1, -2.0);
                 let rLegBR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.2, 0.5), rLegFL.material); rLegBR.position.set(1.4, 1.1, -2.0);
                 rGroup.add(rLegFL, rLegFR, rLegBL, rLegBR); scene.add(rGroup);
 
                 let spawnVector = grabRandomFloorVectorFromMatrix(CELL_SIZE * 5);
+                
+                // AI WALL GLITCH FIX: Ensure entities never initialize stuck straight inside a wall cell
+                if (verifyStaticMapCollisions(spawnVector, 1.5)) {
+                    spawnVector = grabRandomFloorVectorFromMatrix(0);
+                }
 
                 aiEntities.push({
                     label: "RAVAGER", state: "PATROL", pos: spawnVector,
-                    heading: new THREE.Vector3(0,0,-1), speed: 9.0 * speedMult, huntSpeed: 12.5 * speedMult, radius: 1.3, 
+                    heading: new THREE.Vector3(0,0,-1), speed: 10.0 * speedMult, huntSpeed: 14.0 * speedMult, radius: 1.3, 
                     path: [], patrolTarget: grabRandomFloorVectorFromMatrix(), timeStuck: 0, animCycle: 0,
                     meshGroup: rGroup, modelRef: { fl: rLegFL, fr: rLegFR, bl: rLegBL, br: rLegBR, head: ravagerHead, body: ravagerBody }, isMoving: false
                 });
@@ -712,7 +737,6 @@
             } return false;
         }
 
-        // FULLY OPTIMIZED: Wall gliding coordinate separator
         function executeAIPositionSliding(currentPos, velocity, radius) {
             let oldX = currentPos.x;
             let oldZ = currentPos.z;
@@ -754,7 +778,6 @@
             processScareFrame();
         }
 
-        // FULLY OPTIMIZED: Path validation validation engine
         function updateAIPathfinding(ai, dt) {
             let hasLos = checkLineOfSight(ai, player.pos); 
             let prevPos = ai.pos.clone();
@@ -789,10 +812,12 @@
                     
                     executeAIPositionSliding(ai.pos, ai.heading.clone().multiplyScalar(currentSpd * dt), ai.radius);
                     
+                    // ENTITY FREEZE RECOVERY BUG FIX: Teleports entity to a new node if trapped by dynamic layout triggers
                     if(ai.pos.distanceToSquared(prevPos) < 0.001) {
                         ai.timeStuck += dt;
-                        if(ai.timeStuck > 0.5) { 
-                            ai.patrolTarget = grabRandomFloorVectorFromMatrix(CELL_SIZE * 3); 
+                        if(ai.timeStuck > 0.4) { 
+                            ai.pos.copy(grabRandomFloorVectorFromMatrix(CELL_SIZE * 2));
+                            ai.patrolTarget = grabRandomFloorVectorFromMatrix(); 
                             ai.path = calculateAStarPath(ai.pos, ai.patrolTarget); 
                             ai.timeStuck = 0; 
                         }
@@ -891,26 +916,45 @@
 
             if(playerMoving) {
                 moveVector.normalize(); let runSpd = runningThisFrame ? player.sprintSpeed : player.speed;
-                executeAIPositionSliding(player.pos, moveVector.multiplyScalar(runSpd * dt), player.radius);
+                let targetMovementVelocity = moveVector.multiplyScalar(runSpd * dt);
+                executeAIPositionSliding(player.pos, targetMovementVelocity, player.radius);
             }
 
             if(runningThisFrame) { stamina = Math.max(0, stamina - dt * 16); if(stamina <= 0) staminaExhausted = true; }
             else { stamina = Math.min(100, stamina + dt * 20); if(stamina > 20) staminaExhausted = false; }
             document.getElementById('stamina-bar').style.width = `${stamina}%`;
 
+            // THIRD-PERSON MOVEMENT SMOOTHING ENGINE BUG FIX
+            if(playerMoving) { 
+                let targetRotation = Math.atan2(moveVector.x, moveVector.z);
+                let diff = targetRotation - playerGroup.rotation.y;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                playerGroup.rotation.y += diff * 0.22; 
+            } else { 
+                let diff = cameraYaw - playerGroup.rotation.y;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                playerGroup.rotation.y += diff * 0.15; 
+            }
+
             playerGroup.position.copy(player.pos);
-            if(playerMoving) { playerGroup.rotation.y = Math.atan2(moveVector.x, moveVector.z); } else { playerGroup.rotation.y = cameraYaw; }
 
             let activeBob = playerMoving ? Math.sin(ticks * (runningThisFrame ? 14 : 8.5)) * (runningThisFrame ? 0.22 : 0.10) : 0;
             if(isThirdPerson) {
-                playerGroup.visible = true; let backOffset = new THREE.Vector3(-Math.sin(cameraYaw), 0, -Math.cos(cameraYaw)).normalize().multiplyScalar(10.0);
-                camera.position.set(player.pos.x + backOffset.x, player.height + 4.0, player.pos.z + backOffset.z); camera.lookAt(new THREE.Vector3(player.pos.x, player.height, player.pos.z));
+                playerGroup.visible = true; 
+                let backOffset = new THREE.Vector3(-Math.sin(cameraYaw), 0, -Math.cos(cameraYaw)).normalize().multiplyScalar(13.0);
+                let targetCamPos = new THREE.Vector3(player.pos.x + backOffset.x, player.height + 5.0, player.pos.z + backOffset.z);
+                camera.position.lerp(targetCamPos, 0.18); 
+                
+                let targetLookAt = new THREE.Vector3(player.pos.x, player.height + 1.0, player.pos.z);
+                camera.lookAt(targetLookAt);
             } else {
                 playerGroup.visible = false; camera.position.set(player.pos.x, player.height + activeBob, player.pos.z);
                 camera.lookAt(new THREE.Vector3().addVectors(camera.position, targetLookVector));
             }
 
-            if(flashlightOn) { localFlashlight.position.set(player.pos.x, player.height + 1.0, player.pos.z); let pointAhead = new THREE.Vector3().addVectors(localFlashlight.position, new THREE.Vector3(targetLookVector.x, targetLookVector.y, targetLookVector.z).multiplyScalar(20)); localFlashlight.target.position.copy(pointAhead); }
+            // Flashlight positioning logic is now handles automatically via camera sync hierarchy link
 
             let nearAnyTerminal = false;
             Object.keys(terminals).forEach(id => {
@@ -918,13 +962,15 @@
                 if(!term.decrypted) { term.crownMesh.rotation.y += dt * 2.5; if(getDistance2D(player.pos, term.pos) < 6.0) { nearAnyTerminal = true; currentTargetTerminalId = id; } }
             });
 
+            // INDEPENDENT DECRYPTION BUG FIX: Pulling progress directly from the distinct interactive terminal object
             if(nearAnyTerminal && currentTargetTerminalId) {
+                let currentTerminalObj = terminals[currentTargetTerminalId];
                 document.getElementById('interaction-prompt').style.display = 'block';
                 if(keys.e) {
-                    decryptProgress += dt * (selectedClass === "engineer" ? 15 : 10);
-                    if(decryptProgress >= 100) {
-                        terminals[currentTargetTerminalId].decrypted = true; terminals[currentTargetTerminalId].mesh.material.color.setHex(0x00ff66); decryptedCount++;
-                        document.getElementById('objective').innerText = `BYPASS TERMINALS [${decryptedCount}/${totalTerminals}]`; decryptProgress = 0;
+                    currentTerminalObj.progress += dt * (selectedClass === "engineer" ? 18 : 11);
+                    if(currentTerminalObj.progress >= 100) {
+                        currentTerminalObj.decrypted = true; currentTerminalObj.mesh.material.color.setHex(0x00ff66); decryptedCount++;
+                        document.getElementById('objective').innerText = `BYPASS TERMINALS [${decryptedCount}/${totalTerminals}]`;
                         if(decryptedCount >= totalTerminals) { 
                             extractionActive = true; 
                             document.getElementById('objective').innerText = `ACCESS CORNER EXTRACTION PORTAL`; 
@@ -934,7 +980,7 @@
                         }
                     }
                 }
-                document.getElementById('decrypt-progress-bar').style.width = `${decryptProgress}%`;
+                document.getElementById('decrypt-progress-bar').style.width = `${currentTerminalObj.progress}%`;
             } else { document.getElementById('interaction-prompt').style.display = 'none'; }
 
             aiEntities.forEach(ai => {
